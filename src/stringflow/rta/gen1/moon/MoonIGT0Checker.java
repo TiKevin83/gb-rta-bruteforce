@@ -62,7 +62,7 @@ public class MoonIGT0Checker {
         for(int i = 0; i < NUM_NPCS; i++) {
             npcTimers[i] = new ArrayList<Integer>();
         }
-        //LibgambatteBuilder.buildGambatte(false, 100);
+        LibgambatteBuilder.buildGambatte(false, 100);
         Gb.loadGambatte(1);
         gb = new Gb(0, false);
         gb.startEmulator("roms/poke" + gameName + ".gbc");
