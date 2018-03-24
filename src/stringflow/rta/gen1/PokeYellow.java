@@ -4,6 +4,8 @@ import static stringflow.rta.Joypad.*;
 
 public class PokeYellow {
 
+	public static final int igtInjectAddr = 0x739D6;
+
 	/* obsolete
 	public static final int readJoypad = 0x01B9;
 	public static final int joypadOverworld = 0x0C51;
@@ -36,6 +38,8 @@ public class PokeYellow {
     public static final int displayNamingScreen = 0x6307;
 	*/
 
+	public static final int hRandomAdd = 0xFFD3;
+	public static final int hRandomSub = 0xFFD4;
 	public static final int hJoypad = 0xFFF5;
 
 	public static Strat gfSkip = new Strat("_gfskip", 0, new Object[] { "joypad"}, new Integer[] { START }, new Integer[] { 1 });

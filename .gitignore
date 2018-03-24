@@ -57,3 +57,9 @@ log.txt
 complete_paths*.txt
 src/dabomstew/rta/mtmoon/UniquePathList.java
 src/dabomstew/rta/nidobot/TestMe.java
+
+# dumb stuff
+*.sav
+*.gb
+*.gbc
+*.sym

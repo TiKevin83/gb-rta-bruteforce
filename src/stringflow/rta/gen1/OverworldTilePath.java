@@ -1,10 +1,10 @@
 package stringflow.rta.gen1;
 
-import stringflow.rta.astar.AStar;
-import stringflow.rta.astar.Location;
-import stringflow.rta.astar.Node;
-import stringflow.rta.data.Map;
-import stringflow.rta.data.MapDestination;
+import stringflow.rta.gen1.astar.AStar;
+import stringflow.rta.Location;
+import stringflow.rta.gen1.astar.Node;
+import stringflow.rta.gen1.data.Map;
+import stringflow.rta.gen1.data.MapDestination;
 
 import java.util.HashMap;
 import java.util.List;

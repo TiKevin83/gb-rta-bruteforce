@@ -1,6 +1,6 @@
-package stringflow.rta.data;
+package stringflow.rta.gen1.data;
 
-import stringflow.rta.astar.Location;
+import stringflow.rta.Location;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,11 +1,17 @@
-package stringflow.rta.astar;
+package stringflow.rta;
 
 public class Location {
 
+	public int map;
 	public int x;
 	public int y;
-	
+
 	public Location(int x, int y) {
+		this(0, x, y);
+	}
+	
+	public Location(int map, int x, int y) {
+		this.map = map;
 		this.x = x;
 		this.y = y;
 	}
@@ -18,6 +24,6 @@ public class Location {
 	
 	public boolean equals(Object obj) {
 		Location other = (Location) obj;
-		return x == other.x && y == other.y;
+		return x == other.x && y == other.y && map == other.map;
 	}
 }

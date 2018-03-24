@@ -1,4 +1,6 @@
-package stringflow.rta.astar;
+package stringflow.rta.gen1.astar;
+
+import stringflow.rta.Location;
 
 public class Node {
 

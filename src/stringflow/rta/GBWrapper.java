@@ -28,7 +28,10 @@ public class GBWrapper {
             int index = Integer.decode("0x" + lines[i].substring(0, lines[i].indexOf(":")));
             int address = Integer.decode("0x" + lines[i].substring(lines[i].indexOf(":") + 1, lines[i].indexOf(" ")));
             String name = lines[i].substring(lines[i].indexOf(" ") + 1);
-            addressMap.put(name.toLowerCase(), index > 1 ? index * 0x4000 + (0x4000 - address) : address);
+            if(index == 0 && name.toLowerCase().startsWith("sprite")) {
+                name = "w" + name;
+            }
+            addressMap.put(name.toLowerCase(), index > 1 ? index * 0x4000 + (address - 0x4000) : address);
         }
         System.out.println("Read and processed " + symFile + " in " + (System.currentTimeMillis() - startTime) + "ms");
     }
@@ -54,10 +57,15 @@ public class GBWrapper {
     }
 
     public int advanceTo(String addressName) {
-        if(!addressMap.containsKey(addressName.toLowerCase())) {
-            throw new RuntimeException("Could not find " + addressName + " in the sym file!");
+        return advanceTo(getAddress(addressName));
+    }
+
+    public int advanceTo(String... addresses) {
+        int addressesAsInts[] = new int[addresses.length];
+        for(int i = 0; i < addresses.length; i++) {
+            addressesAsInts[i] = getAddress(addresses[i]);
         }
-       return advanceTo(addressMap.get(addressName.toLowerCase()));
+        return advanceTo(addressesAsInts);
     }
 
     public int advanceTo(int... addresses) {
@@ -74,10 +82,7 @@ public class GBWrapper {
     }
 
     public int read(String addressName) {
-        if(!addressMap.containsKey(addressName.toLowerCase())) {
-            throw new RuntimeException("Could not find " + addressName + " in the sym file!");
-        }
-        return gb.readMemory(addressMap.get(addressName.toLowerCase()));
+        return gb.readMemory(getAddress(addressName));
     }
 
     public int read(int address) {
@@ -85,13 +90,21 @@ public class GBWrapper {
     }
 
     public void write(String addressName, int value) {
+        gb.writeMemory(getAddress(addressName), value);
+    }
+
+    public void write(int address, int value) {
+        gb.writeMemory(address, value);
+    }
+
+    public int getAddress(String addressName) {
         if(!addressMap.containsKey(addressName.toLowerCase())) {
             throw new RuntimeException("Could not find " + addressName + " in the sym file!");
         }
-        gb.writeMemory(addressMap.get(addressName.toLowerCase()), value);
+        return addressMap.get(addressName.toLowerCase());
     }
 
-    public void read(int address, int value) {
-        gb.writeMemory(address, value);
+    public Gb getGb() {
+        return gb;
     }
 }

@@ -1,4 +1,4 @@
-package stringflow.rta.data;
+package stringflow.rta.gen1.data;
 
 public class Tile {
 

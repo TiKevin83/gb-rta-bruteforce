@@ -59,8 +59,8 @@ public class Gb {
 //  public static final int MAX_SAVE_SIZE = 211243;
 //  public static final int MAX_SAVE_SIZE = 153894; // Tetris
 //  public static final int MAX_SAVE_SIZE = 162092; // Sml2_10
-//  private static final int MAX_SAVE_SIZE = 186675; // PokeRed
-  private static final int MAX_SAVE_SIZE = 400000; // 2* PokeRed + buffer
+//  private static final int MAX_SAVE_SIZE = 186675; // PokeRedBlue
+  private static final int MAX_SAVE_SIZE = 400000; // 2* PokeRedBlue + buffer
 	public static final ByteBuffer TMP_SAVE_BUFFER = createDirectByteBuffer(MAX_SAVE_SIZE);
 
 	public ByteBuffer saveState() {

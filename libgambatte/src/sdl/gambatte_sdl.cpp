@@ -38,6 +38,10 @@
 #include "blitterwrapper.h"
 #include "mrwint_gbtasgen_Gb.h"
 
+#define DRAW_VAR_COMPARISON 0x11223344
+
+int drawVar = 0x12345678;
+
 namespace {
 
 using namespace gambatte;
@@ -230,10 +234,11 @@ void GambatteSdl::step() {
 
 	while (true) {
 		std::size_t emusamples = SAMPLES_PER_FRAME - overflowSamples;
-		if (gambatte.runFor(vbuf.pixels, vbuf.pitch,
-				reinterpret_cast<gambatte::uint_least32_t*>(inBuf.get()), emusamples) >= 0) {
+		if (gambatte.runFor(vbuf.pixels, vbuf.pitch, reinterpret_cast<gambatte::uint_least32_t*>(inBuf.get()), emusamples) >= 0) {
+			if(drawVar == DRAW_VAR_COMPARISON) {
 		        sdl.blitter.draw();
-			sdl.blitter.present();
+			    sdl.blitter.present();
+		    }
 		}
 
 		overflowSamples += emusamples;
@@ -629,10 +634,10 @@ JNIEXPORT void JNICALL Java_mrwint_gbtasgen_Gb_getInterestingMemory
   UNUSED(env);UNUSED(clazz);UNUSED(arr);
 
   jint *mem_store = env->GetIntArrayElements(arr, 0);
-  
+
   for(int i=0;i<0x10;i++)
 	  mem_store[i] = Java_mrwint_gbtasgen_Gb_readMemory(env, clazz, gb, 0xc208 + i*0x10);
-  
+
   mem_store[0x10] = Java_mrwint_gbtasgen_Gb_readMemory(env, clazz, gb, 0xCC4B);
   mem_store[0x11] = Java_mrwint_gbtasgen_Gb_readMemory(env, clazz, gb, 0xD362);
   mem_store[0x12] = Java_mrwint_gbtasgen_Gb_readMemory(env, clazz, gb, 0xD361);

@@ -4,16 +4,16 @@ import java.io.*;
 
 public class Util {
 
-    public static byte[] readBytesFromFile(String filename) throws IOException {
-        File fh = new File(filename);
+    public static byte[] readBytesFromFile(String fileName) throws IOException {
+        File fh = new File(fileName);
         if(!fh.exists() || !fh.isFile() || !fh.canRead()) {
-            throw new FileNotFoundException(filename);
+            throw new FileNotFoundException(fileName);
         }
         long fileSize = fh.length();
         if(fileSize > Integer.MAX_VALUE) {
-            throw new IOException(filename + " is too long to read in as a byte-array.");
+            throw new IOException(fileName + " is too long to read in as a byte-array.");
         }
-        FileInputStream fis = new FileInputStream(filename);
+        FileInputStream fis = new FileInputStream(fileName);
         byte[] result = new byte[fis.available()];
         fis.read(result);
         fis.close();
@@ -27,10 +27,13 @@ public class Util {
     }
 
     public static String readTextFile(String fileName) throws IOException {
+        File file = new File(fileName);
+        if(!file.exists()) {
+            throw new IOException(fileName + " does not exist.");
+        }
         StringBuilder builder = new StringBuilder();
         String currentLine;
-        BufferedReader reader;
-        reader = new BufferedReader(new FileReader(new File(fileName)));
+        BufferedReader reader = new BufferedReader(new FileReader(file));
         while((currentLine = reader.readLine()) != null) {
             builder.append(currentLine).append("\n");
         }
@@ -44,5 +47,10 @@ public class Util {
             result = "0" + result;
         }
         return result.toUpperCase();
+    }
+
+    public static String getSpriteAddressIndexString(int addressIndex) {
+        String result = addressIndex == 0 ? "Player" : String.valueOf(addressIndex);
+        return result.length() == 1 ? "0" + result : result;
     }
 }
