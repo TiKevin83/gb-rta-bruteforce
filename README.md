@@ -5,7 +5,9 @@ gb-rta-bruteforce
 
 This code wouldn't be possible without the work of [MrWint's gb-tas-gen](https://github.com/mrwint/gb-tas-gen) which the JNI libgambatte bridge is taken from.
 
-Most of the code has been written by [Dabomstew](https://github.com/Dabomstew/gb-rta-bruteforce).
+Most of the original code has been written by [Dabomstew](https://github.com/Dabomstew/gb-rta-bruteforce) and [entrpntr](https://github.com/entrpntr/gb-rta-bruteforce).
+
+This fork rewrote most of the API to allow for more user friendly use.
 
 #### Disclaimer
 

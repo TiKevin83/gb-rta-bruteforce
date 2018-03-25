@@ -59,7 +59,7 @@ public class Map {
 	public static Map SAFARI_ZONE_WEST = new Map(219, 15, 0, 0, 30, "./maps/SAFARI_ZONE_WEST.bin");
 	public static Map SAFARI_ZONE_CENTER = new Map(220, 15, 1000, 1000, 30, "./maps/SAFARI_ZONE_CENTER.bin");
 	
-	public static Map MT_MOON_1 = new Map(59, 20, 69000, 1000, 10, "./maps/MT_MOON_1_TEST.bin");
+	public static Map MT_MOON_1 = new Map(59, 20, 69000, 1000, 10, "./maps/MT_MOON_1.bin");
 	public static Map MT_MOON_2 = new Map(60, 14, 69000, 2000, 10, "./maps/MT_MOON_2.bin");
 	public static Map MT_MOON_3 = new Map(61, 20, 69000, 3000, 10, "./maps/MT_MOON_3.bin");
 	

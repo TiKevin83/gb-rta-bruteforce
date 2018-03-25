@@ -4,6 +4,7 @@ import mrwint.gbtasgen.Gb;
 import stringflow.rta.*;
 import stringflow.rta.gen1.Itemball;
 import stringflow.rta.gen1.OverworldAction;
+import stringflow.rta.gen1.data.Map;
 import stringflow.rta.gen1.data.Species;
 
 import java.io.File;
@@ -178,7 +179,7 @@ public class MoonIGT0Checker {
                     System.out.println("TEXTBOX HIT AT " + wrap.read("wXCoord") + " " + wrap.read("wYCoord"));
                     return false;
                 }
-                if(travellingToWarp(dest.map, dest.x, dest.y)) {
+                if(Map.getMapByID(dest.map).getTile(dest.x, dest.y).isWarp()) {
                     wrap.advanceTo("enterMap");
                     transitionTimes.add(readIGT());
                 }
@@ -312,29 +313,6 @@ public class MoonIGT0Checker {
     private static boolean timeToPickUpItem() {
         for(Itemball itemball : itemballs) {
             if(itemball.canBePickedUp(wrap) && !itemball.isPickedUp(wrap)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean travellingToWarp(int map, int x, int y) {
-        if(map == 59) {
-            if(x == 5 && y == 5) {
-                return true;
-            } else if(x == 17 && y == 11) {
-                return true;
-            }
-        } else if(map == 60) {
-            if(x == 25 && y == 9) {
-                return true;
-            } else if(x == 17 && y == 11) {
-                return true;
-            } else if(x == 21 && y == 17) {
-                return true;
-            }
-        } else {
-            if(x == 25 && y == 9) {
                 return true;
             }
         }
