@@ -60,13 +60,7 @@ public class GBWrapper {
     public Address advanceTo(Object... addresses) {
         int addressesAsInts[] = new int[addresses.length];
         for(int i = 0; i < addresses.length; i++) {
-            if(addresses[i] instanceof String) {
-                addressesAsInts[i] = getAddress(String.valueOf(addresses[i]));
-            } else if(addresses[i] instanceof Integer) {
-                addressesAsInts[i] = Integer.valueOf(String.valueOf(addresses[i]));
-            } else {
-                throw new RuntimeException("Advancement address at index " + i + " is an invalid type.");
-            }
+            addressesAsInts[i] = convertObjectToAddress(addresses[i]);
         }
         int result = 0;
         injectInput(heldJoypad);
@@ -80,20 +74,12 @@ public class GBWrapper {
         return new Address(getAddressName(result), result);
     }
 
-    public int read(String addressName) {
-        return gb.readMemory(getAddress(addressName));
+    public int read(Object address) {
+        return gb.readMemory(convertObjectToAddress(address));
     }
 
-    public int read(int address) {
-        return gb.readMemory(address);
-    }
-
-    public void write(String addressName, int value) {
-        gb.writeMemory(getAddress(addressName), value);
-    }
-
-    public void write(int address, int value) {
-        gb.writeMemory(address, value);
+    public void write(Object address, int value) {
+        gb.writeMemory(convertObjectToAddress(address), value);
     }
 
     public int getAddress(String addressName) {
@@ -119,6 +105,16 @@ public class GBWrapper {
     public void injectInput(int input) {
         if(read(0xFF88) != 0x3) { // hacked way to tell if in bootrom or not
             write(joypadAddress, input);
+        }
+    }
+
+    public int convertObjectToAddress(Object obj) {
+        if(obj instanceof String) {
+            return getAddress(String.valueOf(obj));
+        } else if(obj instanceof Integer) {
+            return Integer.valueOf(String.valueOf(obj));
+        } else {
+            throw new RuntimeException("Tried to convert an invalid type into Address!");
         }
     }
 }

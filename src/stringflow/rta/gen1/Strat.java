@@ -20,13 +20,7 @@ public class Strat {
 
     public void execute(GBWrapper wrap) {
         for(int i = 0; i < addr.length; i++) {
-            if(addr[i] instanceof Integer) {
-                wrap.advanceTo(Integer.valueOf(String.valueOf(addr[i])));
-            } else if(addr[i] instanceof String) {
-                wrap.advanceTo(String.valueOf(addr[i]));
-            } else {
-                throw new RuntimeException("Strat address at index " + i + " is an invalid type.");
-            }
+            wrap.advanceTo(wrap.convertObjectToAddress(addr[i]));
             wrap.hold(input[i]);
             wrap.advance(advanceFrames[i]);
         }

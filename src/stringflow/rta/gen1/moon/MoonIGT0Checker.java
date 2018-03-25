@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static stringflow.rta.gen1.PokeYellow.*;
+import static stringflow.rta.gen1.PokeRedBlue.*;
 import static stringflow.rta.Joypad.*;
 
 public class MoonIGT0Checker {
@@ -33,16 +33,23 @@ public class MoonIGT0Checker {
     private static GBWrapper wrap;
 
     static {
-        gameName = "yellow";
+        gameName = "red";
 
         // Yellow moon
-        path += "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U U U U A U U U U U U U L U U U U U U U U U L A L L U U U U U U U U A L L A L L L L L D L L L A L L L L L D D D D D A D D D A R D D D D L D L L L L L A L L A L L L U L L L L U U U U U U U U A U U U U U R R R D D R R D D D D A D D D A D D A D D D R R R R R R R R R R R A R R R U A R R A U U R R R D S_B D R R R R R R R U U R R R D D D D A D D D D L L L L D D D A D D D D D D A L L L L L L L L A L L A L L L L L A L L A L L A L L U U U U U U A U U U A U U A U U ";
+        //path += "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U U U U A U U U U U U U L U U U U U U U U U L A L L U U U U U U U U A L L A L L L L L D L L L A L L L L L D D D D D A D D D A R D D D D L D L L L L L A L L A L L L U L L L L U U U U U U U U A U U U U U R R R D D R R D D D D A D D D A D D A D D D R R R R R R R R R R R A R R R U A R R A U U R R R D S_B D R R R R R R R U U R R R D D D D A D D D D L L L L D D D A D D D D D D A L L L L L L L L A L L A L L L L L A L L A L L A L L U U U U U U A U U U A U U A U U ";
 
         // Red lass moon
-         // path += "R R R D R A R R U ";
-         // path += "U U U U R U U U U ";
-         // path += "U U U U L L U U U U U U U U U L U U L L U U U U U U L L L L L L L L D L L L L L L D D D D D D D ";
-
+        path += "R R R D R A R R U ";
+        path += "U U U U R U U U U ";
+        path += "U U U U L L U U U U U U U U U L U U L L U U U U U U L L L L L L L L D L L L L L L D D D D D D D ";
+        path += "L A L L D L A L L A L L A D ";
+        path += "U R R R U U L U R ";
+        path += "D D D D L A L L ";
+        path += "R A R R U A R R A U R R A R ";
+        path += "D L D D D D A D L L L A L L L L A U U U U U U U U U U U L U L L U U U L L L ";
+        path += "D R R A D D ";
+        path += "D D D D D R R D D D D D D R R R R R A R R R R R R R R R D ";
+        path += "U U U A R R R R R D D R R R R R R U U A R R R R D D D D D D D D L L L L D D D D D D D D D L L L L L L L L L L L L L L L L L L L L L U U U U A U U U A U U L L U U R U U U ";
         itemballs = new Itemball[]{RARE_CANDY, ESCAPE_ROPE, MEGA_PUNCH, MOON_STONE};
     }
 
@@ -71,7 +78,7 @@ public class MoonIGT0Checker {
         gb = new Gb(0, false);
         gb.startEmulator("roms/poke" + gameName + ".gbc");
         wrap = new GBWrapper(gb, "roms/poke" + gameName + ".sym", hJoypad);
-        //pal.execute(wrap);
+        nopal.execute(wrap);
         gfSkip.execute(wrap);
         intro0.execute(wrap);
         title.execute(wrap);
