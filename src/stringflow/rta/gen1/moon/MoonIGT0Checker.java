@@ -1,10 +1,7 @@
 package stringflow.rta.gen1.moon;
 
 import mrwint.gbtasgen.Gb;
-import stringflow.rta.GBWrapper;
-import stringflow.rta.LibgambatteBuilder;
-import stringflow.rta.Location;
-import stringflow.rta.Util;
+import stringflow.rta.*;
 import stringflow.rta.gen1.Itemball;
 import stringflow.rta.gen1.OverworldAction;
 import stringflow.rta.gen1.data.Species;
@@ -27,7 +24,7 @@ public class MoonIGT0Checker {
     public static final Itemball MEGA_PUNCH = new Itemball(0x9, new Location(61, 0x1C, 0x5));
 
     private static String gameName;
-    private static String path;
+    private static String path = "";
     private static Itemball itemballs[];
 
     private static ArrayList<Integer> npcTimers[] = new ArrayList[NUM_NPCS];
@@ -37,8 +34,11 @@ public class MoonIGT0Checker {
 
     static {
         gameName = "yellow";
-        /* YELLOW MOON */  path = "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U U U U A U U U U U U U L U U U U U U U U U L A L L U U U U U U U U A L L A L L L L L D L L L A L L L L L D D D D D A D D D A R D D D D L D L L L L L A L L A L L L U L L L L U U U U U U U U A U U U U U R R R D D R R D D D D A D D D A D D A D D D R R R R R R R R R R R A R R R U A R R A U U R R R D S_B D R R R R R R R U U R R R D D D D A D D D D L L L L D D D A D D D D D D A L L L L L L L L A L L A L L L L L A L L A L L A L L U U U U U U A U U U A U U A U U ";
-        /* RED TEST */ //path = "U U S_B U A U U U S_B U";
+        /* YELLOW MOON */  //path = "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U ";
+        /* RED TEST */ //path = "";
+
+        // Yellow moon
+        path += "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U ";
         itemballs = new Itemball[]{RARE_CANDY, MOON_STONE};
     }
 
@@ -62,7 +62,7 @@ public class MoonIGT0Checker {
         for(int i = 0; i < NUM_NPCS; i++) {
             npcTimers[i] = new ArrayList<Integer>();
         }
-        LibgambatteBuilder.buildGambatte(false, 100);
+        LibgambatteBuilder.buildGambatte(true, 100);
         Gb.loadGambatte(1);
         gb = new Gb(0, false);
         gb.startEmulator("roms/poke" + gameName + ".gbc");
@@ -93,6 +93,7 @@ public class MoonIGT0Checker {
                             successes--;
                             continue outer;
                         }
+                        wrap.hold(0);
                         if(owAction != OverworldAction.A && owAction != OverworldAction.START_B) {
                             for(int i = 1; i < NUM_NPCS; i++) {
                                 ArrayList<Integer> timer = npcTimers[i];
@@ -125,10 +126,11 @@ public class MoonIGT0Checker {
                         }
                     }
                     npcString = npcString.equals("[") ? "" : npcString.substring(0, npcString.length() - 2) + "]";
-                    System.out.printf("S%d F%d [S] No encounter at map %d x %d y %d %s\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), npcString);
+                    System.out.printf("S%d F%d [S] No encounter at map %d x %d y %d hra=%d hrs=%d %s\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read(hRandomAdd), wrap.read(hRandomSub), npcString);
                 }
             }
-        } System.out.println(successes + "/60");
+        }
+        System.out.println(successes + "/60");
         System.out.println("-------------------------------------------------");
         for(IGTEncounter encounter : igtEncounters.keySet()) {
             System.out.printf("%d/%d level %d %s at %s\n", igtEncounters.get(encounter), 60, encounter.getLevel(), Species.getSpeciesByIndexNumber(encounter.getSpecies()).getName(), "http://pokeworld.herokuapp.com/rb/" + encounter.getMap() + "#" + encounter.getX() + "," + encounter.getY());
@@ -136,7 +138,7 @@ public class MoonIGT0Checker {
     }
 
     private static boolean execute(OverworldAction owAction, int second, int frame) {
-        int res;
+        Address res;
         switch(owAction) {
             case LEFT:
             case UP:
@@ -144,53 +146,63 @@ public class MoonIGT0Checker {
             case DOWN:
                 int encounterTest = wrap.getAddress("TryDoWildEncounter") + 0x54;
                 int input = 16 * (int) (Math.pow(2.0, (owAction.ordinal())));
+                // Execute the action
                 Location dest = getDestination(input);
                 wrap.hold(input);
                 wrap.advanceTo(wrap.getAddress("joypadOverworld") + 1);
-                int result = wrap.advanceTo("joypadOverworld", "newBattle", "manualTextScroll");
-                if(result == wrap.getAddress("manualTextScroll")) {
+                Address result = wrap.advanceTo("joypadOverworld", "newBattle", "manualTextScroll");
+                if(result.equals("manualTextScroll")) {
                     System.out.println("TEXTBOX HIT AT " + wrap.read("wXCoord") + " " + wrap.read("wYCoord"));
                     return false;
                 }
                 while(wrap.read("wXCoord") != dest.x || wrap.read("wYCoord") != dest.y) {
-                    if(result == wrap.getAddress("newBattle")) {
-                        int result2 = wrap.advanceTo(encounterTest, wrap.getAddress("joypadOverworld"));
-                        if(result2 == encounterTest) {
+                    if(result.equals("newBattle")) {
+                        Address result2 = wrap.advanceTo(encounterTest, "joypadOverworld");
+                        if(result2.equals(encounterTest)) {
                             int hra = wrap.read(hRandomAdd);
+                            int hrs = wrap.read(hRandomSub);
+                            int rdiv = gb.getDivState();
                             if(hra < wrap.read("wGrassRate")) {
                                 wrap.advanceFrame();
                                 wrap.advanceFrame();
                                 wrap.advanceFrame();
-                                System.out.printf("S%d F%d [F] Encounter at map %d x %d y %d Species %d Level %d DVs %04X [turnframe]\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), wrap.read("wEnemyMonDVs"));
                                 addIGTEncounter(new IGTEncounter(wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wCurMap"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), true));
+                                System.out.printf("S%d F%d [F] Encounter at map %d x %d y %d Species %d Level %d DVs %04X hra=%d hrs=%d rdiv=%d [turnframe]\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), wrap.read("wEnemyMonDVs"), hra, hrs, rdiv);
                                 return false;
                             }
                         }
                     }
+                    wrap.hold(0);
                     wrap.advanceTo("joypadOverworld");
+                    wrap.hold(input);
                     wrap.advanceTo(wrap.getAddress("joypadOverworld") + 1);
                     result = wrap.advanceTo("newBattle", "joypadOverworld");
                 }
-                int result2 = wrap.advanceTo(encounterTest, wrap.getAddress("joypadOverworld"), wrap.getAddress("manualTextScroll"));
-                if(result == wrap.getAddress("manualTextScroll")) {
+                wrap.hold(0);
+                Address result2 = wrap.advanceTo(encounterTest, "joypadOverworld", "manualTextScroll");
+                if(result2.equals("manualTextScroll")) {
                     System.out.println("TEXTBOX HIT AT " + wrap.read("wXCoord") + " " + wrap.read("wYCoord"));
                     return false;
                 }
-                if(result2 == encounterTest) {
+                if(result2.equals(encounterTest)) {
                     int hra = wrap.read(hRandomAdd);
+                    int hrs = wrap.read(hRandomSub);
+                    int rdiv = gb.getDivState();
                     if(hra < wrap.read("wGrassRate")) {
                         wrap.advanceFrame();
                         wrap.advanceFrame();
                         wrap.advanceFrame();
-                        System.out.printf("S%d F%d [F] Encounter at map %d x %d y %d Species %d Level %d DVs %04X\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), wrap.read("wEnemyMonDVs"));
                         addIGTEncounter(new IGTEncounter(wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wCurMap"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), false));
+                        System.out.printf("S%d F%d [F] Encounter at map %d x %d y %d Species %d Level %d DVs %04X hra=%d hrs=%d rdiv=%d\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), wrap.read("wEnemyMonDVs"), hra, hrs, rdiv);
                         return false;
                     }
+                    wrap.hold(0);
                     wrap.advanceTo("joypadOverworld");
                     if(timeToPickUpItem()) {
-                        wrap.hold(0);
                         wrap.press(A);
+                        wrap.hold(A);
                         wrap.advanceTo("TextCommand0B");
+                        wrap.hold(0);
                         wrap.advanceTo("joypadOverworld");
                     }
                 }
@@ -199,11 +211,11 @@ public class MoonIGT0Checker {
                 wrap.hold(A);
                 wrap.advanceFrame();
                 res = wrap.advanceTo("joypadOverworld", "printLetterDelay", "manualTextScroll");
-                if(res == wrap.getAddress("manualTextScroll")) {
+                if(res.equals("manualTextScroll")) {
                     System.out.println("TEXTBOX HIT AT " + wrap.read("wXCoord") + " " + wrap.read("wYCoord"));
                     return false;
                 }
-                if(res == wrap.getAddress("joypadOverworld")) {
+                if(res.equals("joypadOverworld")) {
                     return true;
                 } else {
                     System.out.println("REACHED PRINTLETTERDELAY");
@@ -221,15 +233,12 @@ public class MoonIGT0Checker {
                 wrap.hold(START);
                 wrap.advanceFrame();
                 wrap.advanceTo("joypad");
-
                 wrap.hold(A);
                 wrap.advanceFrame();
                 wrap.advanceTo("joypad");
-
                 wrap.hold(B);
                 wrap.advanceFrame();
                 wrap.advanceTo("joypad");
-
                 wrap.hold(START);
                 wrap.advanceFrame();
                 wrap.advanceTo("joypadOverworld");
@@ -238,23 +247,18 @@ public class MoonIGT0Checker {
                 wrap.hold(START);
                 wrap.advanceFrame();
                 wrap.advanceTo("joypad");
-
                 wrap.hold(A);
                 wrap.advanceFrame();
                 wrap.advanceTo("joypad");
-
                 wrap.hold(B);
                 wrap.advanceFrame();
                 wrap.advanceTo("joypad");
-
                 wrap.hold(A);
                 wrap.advanceFrame();
                 wrap.advanceTo("joypad");
-
                 wrap.hold(B);
                 wrap.advanceFrame();
                 wrap.advanceTo("joypad");
-
                 wrap.hold(START);
                 wrap.advanceFrame();
                 wrap.advanceTo("joypadOverworld");

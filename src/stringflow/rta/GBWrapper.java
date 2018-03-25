@@ -4,6 +4,7 @@ import mrwint.gbtasgen.Gb;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 public class GBWrapper {
 
@@ -56,29 +57,31 @@ public class GBWrapper {
         }
     }
 
-    public int advanceTo(String addressName) {
+    public Address advanceTo(String addressName) {
         return advanceTo(getAddress(addressName));
     }
 
-    public int advanceTo(String... addresses) {
+    public Address advanceTo(Object... addresses) {
         int addressesAsInts[] = new int[addresses.length];
         for(int i = 0; i < addresses.length; i++) {
-            addressesAsInts[i] = getAddress(addresses[i]);
+            if(addresses[i] instanceof String) {
+                addressesAsInts[i] = getAddress(String.valueOf(addresses[i]));
+            } else if(addresses[i] instanceof Integer) {
+                addressesAsInts[i] = Integer.valueOf(String.valueOf(addresses[i]));
+            } else {
+                throw new RuntimeException("Advancement address at index " + i + " is an invalid type.");
+            }
         }
-        return advanceTo(addressesAsInts);
-    }
-
-    public int advanceTo(int... addresses) {
         int result = 0;
         gb.writeMemory(joypadAddress, heldJoypad);
         while(result == 0) {
             if(addresses.length == 0) {
                 result = gb.step(heldJoypad);
             } else {
-                result = gb.step(heldJoypad, addresses);
+                result = gb.step(heldJoypad, addressesAsInts);
             }
         }
-        return result;
+        return new Address(getAddressName(result), result);
     }
 
     public int read(String addressName) {
@@ -102,6 +105,14 @@ public class GBWrapper {
             throw new RuntimeException("Could not find " + addressName + " in the sym file!");
         }
         return addressMap.get(addressName.toLowerCase());
+    }
+
+    private String getAddressName(int address) {
+        for(Map.Entry<String, Integer> entry : addressMap.entrySet()) {
+            if(address == entry.getValue()) {
+                return entry.getKey();
+            }
+        } return "NOT FOUND";
     }
 
     public Gb getGb() {
