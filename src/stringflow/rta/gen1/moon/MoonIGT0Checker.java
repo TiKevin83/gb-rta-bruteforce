@@ -34,12 +34,16 @@ public class MoonIGT0Checker {
 
     static {
         gameName = "yellow";
-        /* YELLOW MOON */  //path = "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U ";
-        /* RED TEST */ //path = "";
 
         // Yellow moon
-        path += "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U ";
-        itemballs = new Itemball[]{RARE_CANDY, MOON_STONE};
+        path += "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U U U U A U U U U U U U L U U U U U U U U U L A L L U U U U U U U U A L L A L L L L L D L L L A L L L L L D D D D D A D D D A R D D D D L D L L L L L A L L A L L L U L L L L U U U U U U U U A U U U U U R R R D D R R D D D D A D D D A D D A D D D R R R R R R R R R R R A R R R U A R R A U U R R R D S_B D R R R R R R R U U R R R D D D D A D D D D L L L L D D D A D D D D D D A L L L L L L L L A L L A L L L L L A L L A L L A L L U U U U U U A U U U A U U A U U ";
+
+        // Red lass moon
+         // path += "R R R D R A R R U ";
+         // path += "U U U U R U U U U ";
+         // path += "U U U U L L U U U U U U U U U L U U L L U U U U U U L L L L L L L L D L L L L L L D D D D D D D ";
+
+        itemballs = new Itemball[]{RARE_CANDY, ESCAPE_ROPE, MEGA_PUNCH, MOON_STONE};
     }
 
     public static void main(String args[]) throws Exception {
@@ -67,14 +71,15 @@ public class MoonIGT0Checker {
         gb = new Gb(0, false);
         gb.startEmulator("roms/poke" + gameName + ".gbc");
         wrap = new GBWrapper(gb, "roms/poke" + gameName + ".sym", hJoypad);
+        //pal.execute(wrap);
         gfSkip.execute(wrap);
         intro0.execute(wrap);
         title.execute(wrap);
         wrap.advanceTo(igtInjectAddr);
         ByteBuffer save = gb.saveState();
         String actions[] = path.split(" ");
-        int successes = 60 * 60;
-        for(int second = 0; second < 60; second++) {
+        int successes = 60;
+        for(int second = 0; second < 1; second++) {
             outer:
             for(int frame = 0; frame < 60; frame++) {
                 for(int i = 1; i < NUM_NPCS; i++) {
@@ -167,7 +172,7 @@ public class MoonIGT0Checker {
                                 wrap.advanceFrame();
                                 wrap.advanceFrame();
                                 addIGTEncounter(new IGTEncounter(wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wCurMap"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), true));
-                                System.out.printf("S%d F%d [F] Encounter at map %d x %d y %d Species %d Level %d DVs %04X hra=%d hrs=%d rdiv=%d [turnframe]\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), wrap.read("wEnemyMonDVs"), hra, hrs, rdiv);
+                                System.out.printf("S%d F%d [F] Encounter at map %d x %d y %d Species %d Level %d DVs %04X hra=%d hrs=%d rdiv=%d [turnframe]\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), (wrap.read("wEnemyMonDVs") << 8) | (wrap.read(wrap.getAddress("wEnemyMonDVs") + 1)), hra, hrs, rdiv);
                                 return false;
                             }
                         }
@@ -193,7 +198,7 @@ public class MoonIGT0Checker {
                         wrap.advanceFrame();
                         wrap.advanceFrame();
                         addIGTEncounter(new IGTEncounter(wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wCurMap"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), false));
-                        System.out.printf("S%d F%d [F] Encounter at map %d x %d y %d Species %d Level %d DVs %04X hra=%d hrs=%d rdiv=%d\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), wrap.read("wEnemyMonDVs"), hra, hrs, rdiv);
+                        System.out.printf("S%d F%d [F] Encounter at map %d x %d y %d Species %d Level %d DVs %04X hra=%d hrs=%d rdiv=%d\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), (wrap.read("wEnemyMonDVs") << 8) | (wrap.read(wrap.getAddress("wEnemyMonDVs") + 1)), hra, hrs, rdiv);
                         return false;
                     }
                     wrap.hold(0);

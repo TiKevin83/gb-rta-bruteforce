@@ -42,7 +42,7 @@ public class GBWrapper {
     }
 
     public void press(int joypad) {
-        gb.writeMemory(joypadAddress, joypad);
+        injectInput(joypad | heldJoypad);
         gb.step(joypad | heldJoypad);
     }
 
@@ -51,14 +51,10 @@ public class GBWrapper {
     }
 
     public void advance(int amount) {
-        gb.writeMemory(joypadAddress, heldJoypad);
+        injectInput(heldJoypad);
         for(int i = 0; i < amount; i++) {
             gb.step(heldJoypad);
         }
-    }
-
-    public Address advanceTo(String addressName) {
-        return advanceTo(getAddress(addressName));
     }
 
     public Address advanceTo(Object... addresses) {
@@ -73,7 +69,7 @@ public class GBWrapper {
             }
         }
         int result = 0;
-        gb.writeMemory(joypadAddress, heldJoypad);
+        injectInput(heldJoypad);
         while(result == 0) {
             if(addresses.length == 0) {
                 result = gb.step(heldJoypad);
@@ -112,10 +108,17 @@ public class GBWrapper {
             if(address == entry.getValue()) {
                 return entry.getKey();
             }
-        } return "NOT FOUND";
+        }
+        return "NOT FOUND";
     }
 
     public Gb getGb() {
         return gb;
+    }
+
+    public void injectInput(int input) {
+        if(read(0xFF88) != 0x3) { // hacked way to tell if in bootrom or not
+            write(joypadAddress, input);
+        }
     }
 }
