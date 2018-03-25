@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static stringflow.rta.gen1.PokeRedBlue.*;
+import static stringflow.rta.gen1.PokeYellow.*;
 import static stringflow.rta.Joypad.*;
 
 public class MoonIGT0Checker {
@@ -29,28 +29,29 @@ public class MoonIGT0Checker {
 
     private static ArrayList<Integer> npcTimers[] = new ArrayList[NUM_NPCS];
     private static HashMap<IGTEncounter, Integer> igtEncounters = new HashMap<IGTEncounter, Integer>();
+    private static ArrayList<Integer> transitionTimes = new ArrayList<Integer>();
     private static Gb gb;
     private static GBWrapper wrap;
 
     static {
-        gameName = "red";
+        gameName = "yellow";
 
         // Yellow moon
-        //path += "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U U U U A U U U U U U U L U U U U U U U U U L A L L U U U U U U U U A L L A L L L L L D L L L A L L L L L D D D D D A D D D A R D D D D L D L L L L L A L L A L L L U L L L L U U U U U U U U A U U U U U R R R D D R R D D D D A D D D A D D A D D D R R R R R R R R R R R A R R R U A R R A U U R R R D S_B D R R R R R R R U U R R R D D D D A D D D D L L L L D D D A D D D D D D A L L L L L L L L A L L A L L L L L A L L A L L A L L U U U U U U A U U U A U U A U U ";
+        path += "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U U U U A U U U U U U U L U U U U U U U U U L A L L U U U U U U U U A L L A L L L L L D L L L A L L L L L D D D D D A D D D A R D D D D L D L L L L L A L L A L L L U L L L L U U U U U U U U A U U U U U R R R D D R R D D D D A D D D A D D A D D D R R R R R R R R R R R A R R R U A R R A U U R R R D S_B D R R R R R R R U U R R R D D D D A D D D D L L L L D D D A D D D D D D A L L L L L L L L A L L A L L L L L A L L A L L A L L U U U U U U A U U U A U U A U U ";
 
         // Red lass moon
-        path += "R R R D R A R R U ";
-        path += "U U U U R U U U U ";
-        path += "U U U U L L U U U U U U U U U L U U L L U U U U U U L L L L L L L L D L L L L L L D D D D D D D ";
-        path += "L A L L D L A L L A L L A D ";
-        path += "U R R R U U L U R ";
-        path += "D D D D L A L L ";
-        path += "R A R R U A R R A U R R A R ";
-        path += "D L D D D D A D L L L A L L L L A U U U U U U U U U U U L U L L U U U L L L ";
-        path += "D R R A D D ";
-        path += "D D D D D R R D D D D D D R R R R R A R R R R R R R R R D ";
-        path += "U U U A R R R R R D D R R R R R R U U A R R R R D D D D D D D D L L L L D D D D D D D D D L L L L L L L L L L L L L L L L L L L L L U U U U A U U U A U U L L U U R U U U ";
-        itemballs = new Itemball[]{RARE_CANDY, ESCAPE_ROPE, MEGA_PUNCH, MOON_STONE};
+        //path += "R R R D R A R R U ";
+        //path += "U U U U R U U U U ";
+        //path += "U U U U L L U U U U U U U U U L U U L L U U U U U U L L L L L L L L D L L L L L L D D D D D D D ";
+        //path += "L A L L D L A L L A L L A D ";
+        //path += "U R R R U U L U R ";
+        //path += "D D D D L A L L ";
+        //path += "R A R R U A R R A U R R A R ";
+        //path += "D L D D D D A D L L L A L L L L A U U U U U U U U U U U L U L L U U U L L L ";
+        //path += "D R R A D D ";
+        //path += "D D D D D R R D D D D D D R R R R R A R R R R R R R R R D ";
+        //path += "U U U A R R R R R D D R R R R R R U U A R R R R D D D D D D D D L L L L D D D D D D D D D L L L L L L L L L L L L L L L L L L L L L U U U U A U U U A U U L L U U R U U ";
+        itemballs = new Itemball[]{RARE_CANDY, MOON_STONE};
     }
 
     public static void main(String args[]) throws Exception {
@@ -78,7 +79,7 @@ public class MoonIGT0Checker {
         gb = new Gb(0, false);
         gb.startEmulator("roms/poke" + gameName + ".gbc");
         wrap = new GBWrapper(gb, "roms/poke" + gameName + ".sym", hJoypad);
-        nopal.execute(wrap);
+        //nopal.execute(wrap);
         gfSkip.execute(wrap);
         intro0.execute(wrap);
         title.execute(wrap);
@@ -92,11 +93,14 @@ public class MoonIGT0Checker {
                 for(int i = 1; i < NUM_NPCS; i++) {
                     npcTimers[i].clear();
                 }
+                transitionTimes.clear();
                 gb.loadState(save);
                 wrap.write("wPlayTimeSeconds", second);
                 wrap.write("wPlayTimeFrames", frame);
                 cont.execute(wrap);
                 cont.execute(wrap);
+                wrap.advanceTo("enterMap");
+                transitionTimes.add(readIGT());
                 wrap.advanceTo("joypadOverworld");
                 if(actions.length > 1) {
                     for(int j = 0; j < actions.length; j++) {
@@ -138,7 +142,14 @@ public class MoonIGT0Checker {
                         }
                     }
                     npcString = npcString.equals("[") ? "" : npcString.substring(0, npcString.length() - 2) + "]";
-                    System.out.printf("S%d F%d [S] No encounter at map %d x %d y %d hra=%d hrs=%d %s\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read(hRandomAdd), wrap.read(hRandomSub), npcString);
+                    String transitionTimesString = "[";
+                    if(transitionTimes.size() > 1) {
+                        for(int m = 1; m < transitionTimes.size(); m++) {
+                            transitionTimesString += transitionTimes.get(m) - transitionTimes.get(m - 1) + ", ";
+                        }
+                    }
+                    transitionTimesString = transitionTimesString.length() == 1 ? "" : transitionTimesString.substring(0, transitionTimesString.length() - 2) + "]";
+                    System.out.printf("S%d F%d [S] No encounter at map %d x %d y %d hra=%d hrs=%d %s %s\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read(hRandomAdd), wrap.read(hRandomSub), transitionTimesString, npcString);
                 }
             }
         }
@@ -166,6 +177,10 @@ public class MoonIGT0Checker {
                 if(result.equals("manualTextScroll")) {
                     System.out.println("TEXTBOX HIT AT " + wrap.read("wXCoord") + " " + wrap.read("wYCoord"));
                     return false;
+                }
+                if(travellingToWarp(dest.map, dest.x, dest.y)) {
+                    wrap.advanceTo("enterMap");
+                    transitionTimes.add(readIGT());
                 }
                 while(wrap.read("wXCoord") != dest.x || wrap.read("wYCoord") != dest.y) {
                     if(result.equals("newBattle")) {
@@ -280,6 +295,10 @@ public class MoonIGT0Checker {
         }
     }
 
+    private static int readIGT() {
+        return wrap.read("wPlayTimeMinutes") * 3600 + wrap.read("wPlayTimeSeconds") * 60 + wrap.read("wPlayTimeFrames");
+    }
+
     private static void addIGTEncounter(IGTEncounter enc) {
         for(IGTEncounter enc2 : igtEncounters.keySet()) {
             if(enc.equals(enc2)) {
@@ -293,6 +312,29 @@ public class MoonIGT0Checker {
     private static boolean timeToPickUpItem() {
         for(Itemball itemball : itemballs) {
             if(itemball.canBePickedUp(wrap) && !itemball.isPickedUp(wrap)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean travellingToWarp(int map, int x, int y) {
+        if(map == 59) {
+            if(x == 5 && y == 5) {
+                return true;
+            } else if(x == 17 && y == 11) {
+                return true;
+            }
+        } else if(map == 60) {
+            if(x == 25 && y == 9) {
+                return true;
+            } else if(x == 17 && y == 11) {
+                return true;
+            } else if(x == 21 && y == 17) {
+                return true;
+            }
+        } else {
+            if(x == 25 && y == 9) {
                 return true;
             }
         }
