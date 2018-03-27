@@ -24,6 +24,7 @@ temp/*
 logs/*
 oldrngdata/*
 states/*
+*.txt
 
 # binary files
 *.o

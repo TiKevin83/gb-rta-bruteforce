@@ -1,6 +1,9 @@
 package stringflow.rta;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 
 public class Util {
 
@@ -20,7 +23,13 @@ public class Util {
         return result;
     }
 
-    public static void writeBytesToFile(String fileName, byte[] data) throws IOException {
+    public static void writeBytesToFile(String fileName, ByteBuffer buffer) throws IOException {
+        FileChannel channel = new FileOutputStream(fileName).getChannel();
+        channel.write(buffer);
+        channel.close();
+    }
+
+    public static void writeBytesToFile(String fileName, byte data[]) throws IOException {
         FileOutputStream fos = new FileOutputStream(fileName);
         fos.write(data);
         fos.close();
@@ -39,6 +48,15 @@ public class Util {
         }
         reader.close();
         return builder.toString();
+    }
+
+    public static ByteBuffer loadByteBufferFromFile(String filename) throws IOException {
+        byte[] byteArray = readBytesFromFile(filename);
+        ByteBuffer res = ByteBuffer.allocateDirect(byteArray.length).order(ByteOrder.nativeOrder());
+        for(int i = 0; i < byteArray.length; i++) {
+            res.put(byteArray[i]);
+        }
+        return res;
     }
 
     public static String toHexString(int number) {

@@ -98,4 +98,10 @@ public class OverworldTile {
     	}
     	return null;
     }
+
+    public void print() {
+        for(OverworldEdge edge : edgeList) {
+            System.out.println(edge.getAction() + " - cost: " + edge.getCost());
+        }
+    }
 }

@@ -302,12 +302,6 @@ public class Map {
 				tiles[5][4].setCanMoveDown(false);
 				tiles[29][32].setCanMoveDown(false);
 
-				tiles[30][32].setCanMoveUp(false);
-				tiles[31][32].setCanMoveUp(false);
-				tiles[32][32].setCanMoveUp(false);
-				tiles[33][32].setCanMoveUp(false);
-				tiles[34][32].setCanMoveUp(false);
-
 				tiles[32][9].setCanMoveUp(false);
 				tiles[33][9].setCanMoveUp(false);
 				tiles[34][9].setCanMoveUp(false);
