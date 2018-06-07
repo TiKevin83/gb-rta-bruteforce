@@ -1,6 +1,8 @@
 # intellij files
 .idea/*
 *.iml
+*.eml
+*.userlibraries
 
 # output dirs
 libgambatte/java/build/

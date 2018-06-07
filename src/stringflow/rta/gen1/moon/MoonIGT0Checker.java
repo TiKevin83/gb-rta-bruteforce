@@ -1,348 +1,282 @@
 package stringflow.rta.gen1.moon;
 
 import mrwint.gbtasgen.Gb;
-import stringflow.rta.*;
+import stringflow.rta.Address;
+import stringflow.rta.GBWrapper;
+import stringflow.rta.LibgambatteBuilder;
+import stringflow.rta.Location;
 import stringflow.rta.gen1.Itemball;
 import stringflow.rta.gen1.OverworldAction;
-import stringflow.rta.gen1.data.Map;
-import stringflow.rta.gen1.data.Species;
+import stringflow.rta.gen1.PokeRedBlue;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 
-import static stringflow.rta.gen1.PokeRedBlue.*;
 import static stringflow.rta.Joypad.*;
+import static stringflow.rta.gen1.PokeYellow.*;
 
 public class MoonIGT0Checker {
-
-    private static final int NUM_NPCS = 15;
-
-    private static String gameName;
-    private static String path = "";
-    private static boolean writeSaves = true;
-    private static Itemball itemballs[];
-
-    private static ArrayList<Integer> npcTimers[] = new ArrayList[NUM_NPCS];
-    private static HashMap<IGTEncounter, Integer> igtEncounters = new HashMap<IGTEncounter, Integer>();
-    private static ArrayList<Integer> transitionTimes = new ArrayList<Integer>();
-    private static Gb gb;
-    private static GBWrapper wrap;
-
-    static {
-        gameName = "red";
-
-        // Yellow moon
-        //path += "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U U U U A U U U U U U U L U U U U U U U U U L A L L U U U U U U U U A L L A L L L L L D L L L A L L L L L D D D D D A D D D A R D D D D L D L L L L L A L L A L L L U L L L L U U U U U U U U A U U U U U R R R D D R R D D D D A D D D A D D A D D D R R R R R R R R R R R A R R R U A R R A U U R R R D S_B D R R R R R R R U U R R R D D D D A D D D D L L L L D D D A D D D D D D A L L L L L L L L A L L A L L L L L A L L A L L A L L U U U U U U A U U U A U U A U U ";
-
-        // Red super moon
-        path += "";
-
-        // Red lass moon
-        //path += "R R R D R A R R U ";
-        //path += "U U U U R U U U U ";
-        //path += "U U U U L L U U U U U U U U U L U U L L U U U U U U L L L L L L L L D L L L L L L D D D D D D D ";
-        //path += "L A L L D L A L L A L L A D ";
-        //path += "U R R R U U L U R ";
-        //path += "D D D D L A L L ";
-        //path += "R A R R U A R R A U R R A R ";
-        //path += "D L D D D D A D L L L A L L L L A U U U U U U U U U U U L U L L U U U L L L ";
-        //path += "D R R A D D ";
-        //path += "D D D D D R R D D D D D D R R R R R A R R R R R R R R R D ";
-        //path += "U U U A R R R R R D D R R R R R R U U A R R R R D D D D D D D D L L L L D D D D D D D D D L L L L L L L L L L L L L L L L L L L L L U U U U A U U U A U U L L U U R U U ";
-        itemballs = new Itemball[]{Itemball.RARE_CANDY, Itemball.MOON_STONE};
-    }
-
-    public static void main(String args[]) throws Exception {
-        if(!new File("states").exists()) {
-            new File("states").mkdir();
-        }
-        if(!new File("roms").exists()) {
-            new File("roms").mkdir();
-            System.err.println("I need ROMs to simulate!");
-            System.exit(0);
-        }
-        if(!new File("roms/poke" + gameName + ".gbc").exists()) {
-            System.err.println("Could not find poke" + gameName + ".gbc in roms directory!");
-            System.exit(0);
-        }
-        if(!new File("roms/poke" + gameName + ".sym").exists()) {
-            System.err.println("Could not find poke" + gameName + ".sym in roms directory!");
-            System.exit(0);
-        }
-        for(int i = 0; i < NUM_NPCS; i++) {
-            npcTimers[i] = new ArrayList<Integer>();
-        }
-        if(writeSaves) {
-            for(File file : new File("states").listFiles()) {
-                file.delete();
-            }
-        }
-        LibgambatteBuilder.buildGambatte(true, 100);
-        Gb.loadGambatte(1);
-        gb = new Gb(0, false);
-        gb.startEmulator("roms/poke" + gameName + ".gbc");
-        wrap = new GBWrapper(gb, "roms/poke" + gameName + ".sym", hJoypad);
-        nopal.execute(wrap);
-        gfSkip.execute(wrap);
-        intro0.execute(wrap);
-        title.execute(wrap);
-        wrap.advanceTo(igtInjectAddr);
-        ByteBuffer save = gb.saveState();
-        String actions[] = path.split(" ");
-        int successes = 60;
-        for(int second = 0; second < 1; second++) {
-            outer:
-            for(int frame = 0; frame < 60; frame++) {
-                for(int i = 1; i < NUM_NPCS; i++) {
-                    npcTimers[i].clear();
-                }
-                transitionTimes.clear();
-                gb.loadState(save);
-                wrap.write("wPlayTimeSeconds", second);
-                wrap.write("wPlayTimeFrames", frame);
-                cont.execute(wrap);
-                cont.execute(wrap);
-                wrap.advanceTo("enterMap");
-                transitionTimes.add(readIGT());
-                wrap.advanceTo("joypadOverworld");
-                if(actions.length > 1) {
-                    for(int j = 0; j < actions.length; j++) {
-                        OverworldAction owAction = OverworldAction.fromString(actions[j]);
-                        if(!execute(owAction, second, frame)) {
-                            successes--;
-                            continue outer;
-                        }
-                        wrap.hold(0);
-                        if(owAction != OverworldAction.A && owAction != OverworldAction.START_B) {
-                            for(int i = 1; i < NUM_NPCS; i++) {
-                                ArrayList<Integer> timer = npcTimers[i];
-                                int readTimer = wrap.read("wSprite" + Util.getSpriteAddressIndexString(i) + "MovementDelay");
-                                if(readTimer != 0) {
-                                    if(timer.size() > 0) {
-                                        int last = timer.get(timer.size() - 1);
-                                        if(readTimer != last) {
-                                            timer.add(readTimer);
-                                        }
-                                    } else {
-                                        timer.add(readTimer);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    String npcString = "[";
-                    for(int i = 1; i < NUM_NPCS; i++) {
-                        ArrayList<Integer> timer = npcTimers[i];
-                        if(!timer.isEmpty()) {
-                            for(int j = 0; j < timer.size(); j++) {
-                                if(timer.get(j) <= 8) {
-                                    int index = j + 1;
-                                    if(timer.size() > index) {
-                                        npcString += "Timer " + i + " expired at " + index + ", ";
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    npcString = npcString.equals("[") ? "" : npcString.substring(0, npcString.length() - 2) + "]";
-                    String transitionTimesString = "[";
-                    if(transitionTimes.size() > 1) {
-                        for(int m = 1; m < transitionTimes.size(); m++) {
-                            transitionTimesString += transitionTimes.get(m) - transitionTimes.get(m - 1) + ", ";
-                        }
-                    }
-                    transitionTimesString = transitionTimesString.length() == 1 ? "" : transitionTimesString.substring(0, transitionTimesString.length() - 2) + "]";
-                    System.out.printf("S%d F%d [S] No encounter at map %d x %d y %d hra=%d hrs=%d %s %s\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read(hRandomAdd), wrap.read(hRandomSub), transitionTimesString, npcString);
-                    if(writeSaves) {
-                        Util.writeBytesToFile("./states/" + (frame) + ".state", gb.saveState());
-                    }
-                } else {
-                    if(writeSaves) {
-                        Util.writeBytesToFile("./states/" + (frame) + ".state", gb.saveState());
-                    }
-                }
-            }
-        }
-        System.out.println(successes + "/60");
-        System.out.println("-------------------------------------------------");
-        for(IGTEncounter encounter : igtEncounters.keySet()) {
-            System.out.printf("%d/%d level %d %s at %s\n", igtEncounters.get(encounter), 60, encounter.getLevel(), Species.getSpeciesByIndexNumber(encounter.getSpecies()).getName(), "http://extratricky.com/pokeworld/rb/" + encounter.getMap() + "#" + encounter.getX() + "," + encounter.getY());
-        }
-    }
-
-    private static boolean execute(OverworldAction owAction, int second, int frame) {
-        Address res;
-        switch(owAction) {
-            case LEFT:
-            case UP:
-            case RIGHT:
-            case DOWN:
-                int encounterTest = wrap.getAddress("TryDoWildEncounter") + 0x54;
-                int input = 16 * (int) (Math.pow(2.0, (owAction.ordinal())));
-                Location dest = getDestination(input);
-                wrap.hold(input);
-                wrap.advanceTo(wrap.getAddress("joypadOverworld") + 1);
-                Address result = wrap.advanceTo("joypadOverworld", "newBattle", "manualTextScroll");
-                if(result.equals("manualTextScroll")) {
-                    System.out.println("TEXTBOX HIT AT " + wrap.read("wXCoord") + " " + wrap.read("wYCoord"));
-                    return false;
-                }
-                if(Map.getMapByID(dest.map).getTile(dest.x, dest.y).isWarp()) {
+	
+	public static final int NONE = 0;
+	public static final int PICKUP_RARE_CANDY = 1;
+	public static final int PICKUP_ESCAPE_ROPE = 2;
+	public static final int PICKUP_MEGA_PUNCH = 4;
+	public static final int PICKUP_MOON_STONE = 8;
+	public static final int PICKUP_WATER_GUN = 16;
+	public static final int YOLOBALL_PARAS = 32;
+	public static final int SELECT_YOLOBALL_PARAS = 64;
+	
+	private static final Itemball WATER_GUN = new Itemball(0xC, new Location(59, 0x5, 0x1F), new Location(59, 0x6, 0x20));
+	private static final Itemball RARE_CANDY = new Itemball(0xA, new Location(59, 0x23, 0x20), new Location(59, 0x22, 0x1F));
+	private static final Itemball ESCAPE_ROPE = new Itemball(0xB, new Location(59, 0x24, 0x18));
+	private static final Itemball MOON_STONE = new Itemball(0x9, new Location(59, 0x3, 0x2), new Location(59, 0x2, 0x3));
+	private static final Itemball MEGA_PUNCH = new Itemball(0x9, new Location(61, 0x1C, 0x5));
+	
+	public static void main(String args[]) throws Exception {
+		
+		int maxSecond = 1;
+		long params = PICKUP_RARE_CANDY | PICKUP_MOON_STONE;
+		String gameName = "yellow";
+		String path = "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U U U U A U U U U U U U L U U U U U U U U U L A L L U U U U U U U U A L L A L L L L L D L L L A L L L L L D D D D D A D D D A R D D D D L D L L L L L A L L A L L L U L L L L U U U U U U U U A U U U U U R R R D D R R D D D D A D D D A D D A D D D R R R R R R R R R R R A R R R U A R R A U U R R R D S_B D R R R R R R R U U R R R D D D D A D D D D L L L L D D D A D D D D D D A L L L L L L L L A L L A L L L L L A L L A L L A L L U U U U U U A U U U A U U A U U ";
+		PrintStream target = System.out;
+		
+		if(!new File("roms").exists()) {
+			new File("roms").mkdir();
+			System.err.println("I need ROMs to simulate!");
+			System.exit(0);
+		}
+		if(!new File("roms/poke" + gameName + ".gbc").exists()) {
+			System.err.println("Could not find poke" + gameName + ".gbc in roms directory!");
+			System.exit(0);
+		}
+		if(!new File("roms/poke" + gameName + ".sym").exists()) {
+			System.err.println("Could not find poke" + gameName + ".sym in roms directory!");
+			System.exit(0);
+		}
+		
+		LibgambatteBuilder.buildGambatte(false, 100);
+		Gb.loadGambatte(1);
+		Gb gb = new Gb(0, false);
+		gb.startEmulator("roms/poke" + gameName + ".gbc");
+		GBWrapper wrap = new GBWrapper(gb, "roms/poke" + gameName + ".sym", hJoypad, hRandomAdd, hRandomSub);
+		if(!gameName.equalsIgnoreCase("yellow")) {
+			PokeRedBlue.nopal.execute(wrap);
+		}
+		gfSkip.execute(wrap);
+		intro0.execute(wrap);
+		title.execute(wrap);
+		wrap.advanceTo(igtInjectAddr);
+		ByteBuffer igtState = gb.saveState();
+		ByteBuffer initalStates[] = new ByteBuffer[maxSecond * 60];
+		for(int second = 0; second < maxSecond; second++) {
+			for(int frame = 0; frame < 60; frame++) {
+				gb.loadState(igtState);
+				wrap.write("wPlayTimeSeconds", second);
+				wrap.write("wPlayTimeFrames", frame);
+				cont.execute(wrap);
+				cont.execute(wrap);
+				wrap.advanceTo("joypadOverworld");
+				initalStates[second * 60 + frame] = gb.saveState();
+			}
+		}
+		IGTMap map = checkIGT0(wrap, gameName, initalStates, path, params);
+		for(int i = 0; i < map.getSize(); i++) {
+			int second = i / 60;
+			int frame = i % 60;
+			IGTResult result = map.getResult(i);
+			String rng = String.format("0x%4s", Integer.toHexString(result.getRNG()).toUpperCase()).replace(' ', '0');
+			if(result.getSpecies() == 0) {
+				target.printf("[%d][%d] No encounter at [%d#%d,%d]; rng %s\n", second, frame, result.getMap(), result.getX(), result.getY(), rng);
+			} else {
+				target.printf("[%d][%d] Encounter at [%d#%d,%d]: %s lv%d DVs %04X rng %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getSpeciesName(), result.getLevel(), result.getDvs(), rng);
+			}
+			target.flush();
+		}
+	}
+	
+	public static IGTMap checkIGT0(GBWrapper wrap, String gameName, ByteBuffer initalStates[], String path, long params) {
+		ArrayList<Itemball> itemballs = new ArrayList<>();
+		if((params & PICKUP_RARE_CANDY) != 0) {
+			itemballs.add(RARE_CANDY);
+		}
+		if((params & PICKUP_ESCAPE_ROPE) != 0) {
+			itemballs.add(ESCAPE_ROPE);
+		}
+		if((params & PICKUP_MEGA_PUNCH) != 0) {
+			itemballs.add(MEGA_PUNCH);
+		}
+		if((params & PICKUP_MOON_STONE) != 0) {
+			itemballs.add(MOON_STONE);
+		}
+		if((params & PICKUP_WATER_GUN) != 0) {
+			itemballs.add(WATER_GUN);
+		}
+		int maxSecond = (int)Math.ceil(initalStates.length / 60);
+		IGTMap igtmap = new IGTMap(maxSecond);
+		String actions[] = path.split(" ");
+		for(int second = 0; second < maxSecond; second++) {
+			for(int frame = 0; frame < 60; frame++) {
+				int index = second * 60 + frame;
+				wrap.loadState(initalStates[index]);
+				wrap.advanceTo("joypadOverworld");
+				for(String action : actions) {
+					if(!execute(wrap, OverworldAction.fromString(action), itemballs, params)) {
+						break;
+					}
+				}
+				igtmap.addResult(wrap, index);
+			}
+		}
+		return igtmap;
+	}
+	
+	private static boolean execute(GBWrapper wrap, OverworldAction owAction, ArrayList<Itemball> itemballs, long params) {
+		Address res;
+		switch(owAction) {
+			case LEFT:
+			case UP:
+			case RIGHT:
+			case DOWN:
+				int encounterTest = wrap.getAddress("TryDoWildEncounter") + 0x54;
+				int input = 16 * (int)(Math.pow(2.0, (owAction.ordinal())));
+				Location dest = getDestination(wrap, input);
+				wrap.hold(input);
+				wrap.advanceTo(wrap.getAddress("joypadOverworld") + 1);
+				Address result = wrap.advanceTo("joypadOverworld", "newBattle", "manualTextScroll");
+				if(result.equals("manualTextScroll")) {
+					return false;
+				}
+                /*if(Map.getMapByID(dest.map).getTile(dest.x, dest.y).isWarp()) {
                     wrap.advanceTo("enterMap");
                     transitionTimes.add(readIGT());
-                }
-                while(wrap.read("wXCoord") != dest.x || wrap.read("wYCoord") != dest.y) {
-                    if(result.equals("newBattle")) {
-                        Address result2 = wrap.advanceTo(encounterTest, "joypadOverworld");
-                        if(result2.equals(encounterTest)) {
-                            int hra = wrap.read(hRandomAdd);
-                            int hrs = wrap.read(hRandomSub);
-                            int rdiv = gb.getDivState();
-                            if(hra < wrap.read("wGrassRate")) {
-                                wrap.advanceFrame();
-                                wrap.advanceFrame();
-                                wrap.advanceFrame();
-                                addIGTEncounter(new IGTEncounter(wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wCurMap"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), true));
-                                System.out.printf("S%d F%d [F] Encounter at map %d x %d y %d Species %d Level %d DVs %04X hra=%d hrs=%d rdiv=%d [turnframe]\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), (wrap.read("wEnemyMonDVs") << 8) | (wrap.read(wrap.getAddress("wEnemyMonDVs") + 1)), hra, hrs, rdiv);
-                                return false;
-                            }
-                        }
-                    }
-                    wrap.hold(0);
-                    wrap.advanceTo("joypadOverworld");
-                    wrap.hold(input);
-                    wrap.advanceTo(wrap.getAddress("joypadOverworld") + 1);
-                    result = wrap.advanceTo("newBattle", "joypadOverworld");
-                }
-                wrap.hold(0);
-                Address result2 = wrap.advanceTo(encounterTest, "joypadOverworld", "manualTextScroll");
-                if(result2.equals("manualTextScroll")) {
-                    System.out.println("TEXTBOX HIT AT " + wrap.read("wXCoord") + " " + wrap.read("wYCoord"));
-                    return false;
-                }
-                if(result2.equals(encounterTest)) {
-                    int hra = wrap.read(hRandomAdd);
-                    int hrs = wrap.read(hRandomSub);
-                    int rdiv = gb.getDivState();
-                    if(hra < wrap.read("wGrassRate")) {
-                        wrap.advanceFrame();
-                        wrap.advanceFrame();
-                        wrap.advanceFrame();
-                        addIGTEncounter(new IGTEncounter(wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wCurMap"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), false));
-                        System.out.printf("S%d F%d [F] Encounter at map %d x %d y %d Species %d Level %d DVs %04X hra=%d hrs=%d rdiv=%d\n", second, frame, wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), wrap.read("wEnemyMonSpecies"), wrap.read("wEnemyMonLevel"), (wrap.read("wEnemyMonDVs") << 8) | (wrap.read(wrap.getAddress("wEnemyMonDVs") + 1)), hra, hrs, rdiv);
-                        return false;
-                    }
-                    wrap.hold(0);
-                    wrap.advanceTo("joypadOverworld");
-                    if(timeToPickUpItem()) {
-                        wrap.press(A);
-                        wrap.hold(A);
-                        wrap.advanceTo("TextCommand0B");
-                        wrap.hold(0);
-                        wrap.advanceTo("joypadOverworld");
-                    }
-                }
-                return true;
-            case A:
-                wrap.hold(A);
-                wrap.advanceFrame();
-                res = wrap.advanceTo("joypadOverworld", "printLetterDelay", "manualTextScroll");
-                if(res.equals("manualTextScroll")) {
-                    System.out.println("TEXTBOX HIT AT " + wrap.read("wXCoord") + " " + wrap.read("wYCoord"));
-                    return false;
-                }
-                if(res.equals("joypadOverworld")) {
-                    return true;
-                } else {
-                    System.out.println("REACHED PRINTLETTERDELAY");
-                    return false;
-                }
-            case START_B:
-                wrap.hold(START);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypad");
-                wrap.hold(B);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypadOverworld");
-                return true;
-            case S_A_B_S:
-                wrap.hold(START);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypad");
-                wrap.hold(A);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypad");
-                wrap.hold(B);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypad");
-                wrap.hold(START);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypadOverworld");
-                return true;
-            case S_A_B_A_B_S:
-                wrap.hold(START);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypad");
-                wrap.hold(A);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypad");
-                wrap.hold(B);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypad");
-                wrap.hold(A);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypad");
-                wrap.hold(B);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypad");
-                wrap.hold(START);
-                wrap.advanceFrame();
-                wrap.advanceTo("joypadOverworld");
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    private static int readIGT() {
-        return wrap.read("wPlayTimeMinutes") * 3600 + wrap.read("wPlayTimeSeconds") * 60 + wrap.read("wPlayTimeFrames");
-    }
-
-    private static void addIGTEncounter(IGTEncounter enc) {
-        for(IGTEncounter enc2 : igtEncounters.keySet()) {
-            if(enc.equals(enc2)) {
-                igtEncounters.put(enc2, igtEncounters.get(enc2) + 1);
-                return;
-            }
-        }
-        igtEncounters.put(enc, 1);
-    }
-
-    private static boolean timeToPickUpItem() {
-        for(Itemball itemball : itemballs) {
-            if(itemball.canBePickedUp(wrap) && !itemball.isPickedUp(wrap)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static Location getDestination(int input) {
-        int map = wrap.read("wCurMap");
-        int x = wrap.read("wXCoord");
-        int y = wrap.read("wYCoord");
-        if(input == LEFT) {
-            return new Location(map, x - 1, y);
-        } else if(input == RIGHT) {
-            return new Location(map, x + 1, y);
-        } else if(input == UP) {
-            return new Location(map, x, y - 1);
-        } else if(input == DOWN) {
-            return new Location(map, x, y + 1);
-        } else {
-            return new Location(map, x, y);
-        }
-    }
+                }*/
+				while(wrap.read("wXCoord") != dest.x || wrap.read("wYCoord") != dest.y) {
+					if(result.equals("newBattle")) {
+						Address result2 = wrap.advanceTo(encounterTest, "joypadOverworld");
+						if(result2.equals(encounterTest)) {
+							int hra = wrap.getRandomAdd();
+							if(hra < wrap.read("wGrassRate")) {
+								wrap.advanceFrame();
+								wrap.advanceFrame();
+								wrap.advanceFrame();
+								return false;
+							}
+						}
+					}
+					wrap.hold(0);
+					wrap.advanceTo("joypadOverworld");
+					wrap.hold(input);
+					wrap.advanceTo(wrap.getAddress("joypadOverworld") + 1);
+					result = wrap.advanceTo("newBattle", "joypadOverworld");
+				}
+				wrap.hold(0);
+				Address result2 = wrap.advanceTo(encounterTest, "joypadOverworld", "manualTextScroll");
+				if(result2.equals("manualTextScroll")) {
+					return false;
+				}
+				if(result2.equals(encounterTest)) {
+					int hra = wrap.getRandomAdd();
+					if(hra < wrap.read("wGrassRate")) {
+						wrap.advanceFrame();
+						wrap.advanceFrame();
+						wrap.advanceFrame();
+						return false;
+					}
+					wrap.hold(0);
+					wrap.advanceTo("joypadOverworld");
+					if(timeToPickUpItem(wrap, itemballs)) {
+						wrap.press(A);
+						wrap.hold(A);
+						wrap.advanceTo("TextCommand0B");
+						wrap.hold(0);
+						wrap.advanceTo("joypadOverworld");
+					}
+				}
+				return true;
+			case A:
+				wrap.hold(A);
+				wrap.advanceFrame();
+				res = wrap.advanceTo("joypadOverworld", "printLetterDelay", "manualTextScroll");
+				if(res.equals("manualTextScroll")) {
+					return false;
+				}
+				if(res.equals("joypadOverworld")) {
+					return true;
+				} else {
+					return false;
+				}
+			case START_B:
+				wrap.hold(START);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypad");
+				wrap.hold(B);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypadOverworld");
+				return true;
+			case S_A_B_S:
+				wrap.hold(START);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypad");
+				wrap.hold(A);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypad");
+				wrap.hold(B);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypad");
+				wrap.hold(START);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypadOverworld");
+				return true;
+			case S_A_B_A_B_S:
+				wrap.hold(START);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypad");
+				wrap.hold(A);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypad");
+				wrap.hold(B);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypad");
+				wrap.hold(A);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypad");
+				wrap.hold(B);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypad");
+				wrap.hold(START);
+				wrap.advanceFrame();
+				wrap.advanceTo("joypadOverworld");
+				return true;
+			default:
+				return false;
+		}
+	}
+	
+	private static boolean timeToPickUpItem(GBWrapper wrap, ArrayList<Itemball> itemballs) {
+		for(Itemball itemball : itemballs) {
+			if(itemball.canBePickedUp(wrap) && !itemball.isPickedUp(wrap)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private static Location getDestination(GBWrapper wrap, int input) {
+		int map = wrap.read("wCurMap");
+		int x = wrap.read("wXCoord");
+		int y = wrap.read("wYCoord");
+		if(input == LEFT) {
+			return new Location(map, x - 1, y);
+		} else if(input == RIGHT) {
+			return new Location(map, x + 1, y);
+		} else if(input == UP) {
+			return new Location(map, x, y - 1);
+		} else if(input == DOWN) {
+			return new Location(map, x, y + 1);
+		} else {
+			return new Location(map, x, y);
+		}
+	}
 }

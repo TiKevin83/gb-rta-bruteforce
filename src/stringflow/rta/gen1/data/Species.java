@@ -3,7 +3,8 @@ package stringflow.rta.gen1.data;
 public class Species {
 
 	private static Species[] pokemon = new Species[256];
-
+	
+	public static final Species UNKNOWN = new Species("UNKNOWN", 0);
 	public static final Species RHYDON = new Species("RHYDON", 1);
 	public static final Species KANGASKHAN = new Species("KANGASKHAN", 2);
 	public static final Species NIDORAN_MALE = new Species("NIDORAN_MALE", 3);
