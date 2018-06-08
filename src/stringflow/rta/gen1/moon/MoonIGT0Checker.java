@@ -1,10 +1,7 @@
 package stringflow.rta.gen1.moon;
 
 import mrwint.gbtasgen.Gb;
-import stringflow.rta.Address;
-import stringflow.rta.GBWrapper;
-import stringflow.rta.LibgambatteBuilder;
-import stringflow.rta.Location;
+import stringflow.rta.*;
 import stringflow.rta.gen1.Itemball;
 import stringflow.rta.gen1.OverworldAction;
 import stringflow.rta.gen1.PokeRedBlue;
@@ -27,7 +24,9 @@ public class MoonIGT0Checker {
 	public static final int PICKUP_WATER_GUN = 16;
 	public static final int YOLOBALL_PARAS = 32;
 	public static final int SELECT_YOLOBALL_PARAS = 64;
+	public static final int MONITOR_NPC_TIMERS = 128;
 	
+	private static final int NUM_NPCS = 15;
 	private static final Itemball WATER_GUN = new Itemball(0xC, new Location(59, 0x5, 0x1F), new Location(59, 0x6, 0x20));
 	private static final Itemball RARE_CANDY = new Itemball(0xA, new Location(59, 0x23, 0x20), new Location(59, 0x22, 0x1F));
 	private static final Itemball ESCAPE_ROPE = new Itemball(0xB, new Location(59, 0x24, 0x18));
@@ -37,7 +36,8 @@ public class MoonIGT0Checker {
 	public static void main(String args[]) throws Exception {
 		
 		int maxSecond = 1;
-		long params = PICKUP_RARE_CANDY | PICKUP_MOON_STONE;
+		long params = PICKUP_RARE_CANDY | PICKUP_MOON_STONE | MONITOR_NPC_TIMERS;
+		boolean printNPCTimers = true;
 		String gameName = "yellow";
 		String path = "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U U U U A U U U U U U U L U U U U U U U U U L A L L U U U U U U U U A L L A L L L L L D L L L A L L L L L D D D D D A D D D A R D D D D L D L L L L L A L L A L L L U L L L L U U U U U U U U A U U U U U R R R D D R R D D D D A D D D A D D A D D D R R R R R R R R R R R A R R R U A R R A U U R R R D S_B D R R R R R R R U U R R R D D D D A D D D D L L L L D D D A D D D D D D A L L L L L L L L A L L A L L L L L A L L A L L A L L U U U U U U A U U U A U U A U U ";
 		PrintStream target = System.out;
@@ -88,9 +88,9 @@ public class MoonIGT0Checker {
 			IGTResult result = map.getResult(i);
 			String rng = String.format("0x%4s", Integer.toHexString(result.getRNG()).toUpperCase()).replace(' ', '0');
 			if(result.getSpecies() == 0) {
-				target.printf("[%d][%d] No encounter at [%d#%d,%d]; rng %s\n", second, frame, result.getMap(), result.getX(), result.getY(), rng);
+				target.printf("[%d][%d] No encounter at [%d#%d,%d]; rng %s %s\n", second, frame, result.getMap(), result.getX(), result.getY(), rng, printNPCTimers ? "npctimers " + result.getNpcTimers() : "");
 			} else {
-				target.printf("[%d][%d] Encounter at [%d#%d,%d]: %s lv%d DVs %04X rng %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getSpeciesName(), result.getLevel(), result.getDvs(), rng);
+				target.printf("[%d][%d] Encounter at [%d#%d,%d]: %s lv%d DVs %04X rng %s %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getSpeciesName(), result.getLevel(), result.getDvs(), rng, printNPCTimers ? "npctimers " + result.getNpcTimers() : "");
 			}
 			target.flush();
 		}
@@ -114,10 +114,14 @@ public class MoonIGT0Checker {
 			itemballs.add(WATER_GUN);
 		}
 		int maxSecond = (int)Math.ceil(initalStates.length / 60);
+		ArrayList<Integer>[] npcTimers = new ArrayList[NUM_NPCS];
 		IGTMap igtmap = new IGTMap(maxSecond);
 		String actions[] = path.split(" ");
 		for(int second = 0; second < maxSecond; second++) {
 			for(int frame = 0; frame < 60; frame++) {
+				for(int i = 0; i < NUM_NPCS; i++) {
+					npcTimers[i] = new ArrayList<>();
+				}
 				int index = second * 60 + frame;
 				wrap.loadState(initalStates[index]);
 				wrap.advanceTo("joypadOverworld");
@@ -125,8 +129,11 @@ public class MoonIGT0Checker {
 					if(!execute(wrap, OverworldAction.fromString(action), itemballs, params)) {
 						break;
 					}
+					if((params & MONITOR_NPC_TIMERS) != 0) {
+						updateNPCTimers(wrap, npcTimers);
+					}
 				}
-				igtmap.addResult(wrap, index);
+				igtmap.addResult(wrap, index, npcTimers);
 			}
 		}
 		return igtmap;
@@ -251,6 +258,15 @@ public class MoonIGT0Checker {
 				return true;
 			default:
 				return false;
+		}
+	}
+	
+	private static void updateNPCTimers(GBWrapper wrap, ArrayList<Integer> timers[]) {
+		for(int index = 1; index < NUM_NPCS; index++) {
+			String addressPrefix = "wSprite" + Util.getSpriteAddressIndexString(index);
+			if(wrap.read(addressPrefix + "SpriteImageIdx") != 0xFF) {
+				timers[index].add(wrap.read(addressPrefix + "MovementDelay"));
+			}
 		}
 	}
 	

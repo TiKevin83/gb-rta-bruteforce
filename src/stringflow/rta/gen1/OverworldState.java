@@ -1,5 +1,7 @@
 package stringflow.rta.gen1;
 
+import stringflow.rta.Checkpoint;
+
 import java.nio.ByteBuffer;
 
 public class OverworldState {

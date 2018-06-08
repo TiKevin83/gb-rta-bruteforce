@@ -8,6 +8,7 @@ public class IGTResult {
 	private int x;
 	private int y;
 	private int rng;
+	private String npcTimers;
 	private int species;
 	private int level;
 	private int dvs;
@@ -16,11 +17,12 @@ public class IGTResult {
 	private boolean redbarYoloball;
 	private boolean redbarSelectYoloball;
 	
-	public IGTResult(int map, int x, int y, int rng, int species, int level, int dvs, boolean yoloball, boolean selectYoloball, boolean redbarYoloball, boolean redbarSelectYoloball) {
+	public IGTResult(int map, int x, int y, int rng, String npcTimers, int species, int level, int dvs, boolean yoloball, boolean selectYoloball, boolean redbarYoloball, boolean redbarSelectYoloball) {
 		this.map = map;
 		this.x = x;
 		this.y = y;
 		this.rng = rng;
+		this.npcTimers = npcTimers;
 		this.species = species;
 		this.level = level;
 		this.dvs = dvs;
@@ -44,6 +46,10 @@ public class IGTResult {
 	
 	public int getRNG() {
 		return rng;
+	}
+	
+	public String getNpcTimers() {
+		return npcTimers;
 	}
 	
 	public int getSpecies() {
