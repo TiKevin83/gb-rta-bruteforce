@@ -2,13 +2,18 @@ package stringflow.rta.gen1.moon;
 
 import stringflow.rta.gen1.data.Species;
 
+import java.nio.ByteBuffer;
+
 public class IGTResult {
+	
+	public static final int SIZE = 1 + 1 + 1 + 2 + (4 * 14) + 1 + 1 + 2 + 1 + 1 + 1 + 1;
 
 	private int map;
 	private int x;
 	private int y;
 	private int rng;
 	private String npcTimers;
+	private ByteBuffer save;
 	private int species;
 	private int level;
 	private int dvs;
@@ -17,12 +22,13 @@ public class IGTResult {
 	private boolean redbarYoloball;
 	private boolean redbarSelectYoloball;
 	
-	public IGTResult(int map, int x, int y, int rng, String npcTimers, int species, int level, int dvs, boolean yoloball, boolean selectYoloball, boolean redbarYoloball, boolean redbarSelectYoloball) {
+	public IGTResult(int map, int x, int y, int rng, String npcTimers, ByteBuffer save, int species, int level, int dvs, boolean yoloball, boolean selectYoloball, boolean redbarYoloball, boolean redbarSelectYoloball) {
 		this.map = map;
 		this.x = x;
 		this.y = y;
 		this.rng = rng;
 		this.npcTimers = npcTimers;
+		this.save = save;
 		this.species = species;
 		this.level = level;
 		this.dvs = dvs;
@@ -50,6 +56,23 @@ public class IGTResult {
 	
 	public String getNpcTimers() {
 		return npcTimers;
+	}
+	
+	public int[] getNpcTimersAsIntArray() {
+		String splitArray[] = npcTimers.split("_");
+		int result[] = new int[splitArray.length];
+		for(int i = 0; i < splitArray.length; i++) {
+			result[i] = Integer.decode("0x" + splitArray[i]);
+		}
+		return result;
+	}
+	
+	public ByteBuffer getSave() {
+		return save;
+	}
+	
+	public void setSave(ByteBuffer save) {
+		this.save = save;
 	}
 	
 	public int getSpecies() {

@@ -25,6 +25,7 @@ public class MoonIGT0Checker {
 	public static final int YOLOBALL_PARAS = 32;
 	public static final int SELECT_YOLOBALL_PARAS = 64;
 	public static final int MONITOR_NPC_TIMERS = 128;
+	public static final int CREATE_SAVE_STATES = 256;
 	
 	private static final int NUM_NPCS = 15;
 	private static final Itemball WATER_GUN = new Itemball(0xC, new Location(59, 0x5, 0x1F), new Location(59, 0x6, 0x20));
@@ -35,17 +36,22 @@ public class MoonIGT0Checker {
 	
 	public static void main(String args[]) throws Exception {
 		
+		LibgambatteBuilder.buildGambatte(true, 100);
 		int maxSecond = 1;
-		long params = PICKUP_RARE_CANDY | PICKUP_MOON_STONE | MONITOR_NPC_TIMERS;
+		long params = PICKUP_RARE_CANDY | PICKUP_MOON_STONE | MONITOR_NPC_TIMERS | CREATE_SAVE_STATES;
 		boolean printNPCTimers = true;
+		boolean writeStates = true;
 		String gameName = "yellow";
-		String path = "U S_B U U U U U U U U U U U R R R R R R R U U U U U U U R R R D D D D D D D D D D R D D D A D D D D A R R R R R R R R U R R U U U U A U U U U U U U L U U U U U U U U U L A L L U U U U U U U U A L L A L L L L L D L L L A L L L L L D D D D D A D D D A R D D D D L D L L L L L A L L A L L L U L L L L U U U U U U U U A U U U U U R R R D D R R D D D D A D D D A D D A D D D R R R R R R R R R R R A R R R U A R R A U U R R R D S_B D R R R R R R R U U R R R D D D D A D D D D L L L L D D D A D D D D D D A L L L L L L L L A L L A L L L L L A L L A L L A L L U U U U U U A U U U A U U A U U ";
+		String path = "";
 		PrintStream target = System.out;
 		
 		if(!new File("roms").exists()) {
 			new File("roms").mkdir();
 			System.err.println("I need ROMs to simulate!");
 			System.exit(0);
+		}
+		if(!new File("states").exists()) {
+			new File("states").mkdir();
 		}
 		if(!new File("roms/poke" + gameName + ".gbc").exists()) {
 			System.err.println("Could not find poke" + gameName + ".gbc in roms directory!");
@@ -55,8 +61,12 @@ public class MoonIGT0Checker {
 			System.err.println("Could not find poke" + gameName + ".sym in roms directory!");
 			System.exit(0);
 		}
+		if(writeStates) {
+			for(File file : new File("states").listFiles()) {
+				file.delete();
+			}
+		}
 		
-		LibgambatteBuilder.buildGambatte(false, 100);
 		Gb.loadGambatte(1);
 		Gb gb = new Gb(0, false);
 		gb.startEmulator("roms/poke" + gameName + ".gbc");
@@ -70,7 +80,7 @@ public class MoonIGT0Checker {
 		wrap.advanceTo(igtInjectAddr);
 		ByteBuffer igtState = gb.saveState();
 		ByteBuffer initalStates[] = new ByteBuffer[maxSecond * 60];
-		for(int second = 0; second < maxSecond; second++) {
+		for(int second = 39; second < 40; second++) {
 			for(int frame = 0; frame < 60; frame++) {
 				gb.loadState(igtState);
 				wrap.write("wPlayTimeSeconds", second);
@@ -78,10 +88,11 @@ public class MoonIGT0Checker {
 				cont.execute(wrap);
 				cont.execute(wrap);
 				wrap.advanceTo("joypadOverworld");
-				initalStates[second * 60 + frame] = gb.saveState();
+				initalStates[0 * 60 + frame] = gb.saveState();
 			}
 		}
 		IGTMap map = checkIGT0(wrap, gameName, initalStates, path, params);
+		map.save("./igtmap.bin");
 		for(int i = 0; i < map.getSize(); i++) {
 			int second = i / 60;
 			int frame = i % 60;
@@ -89,6 +100,13 @@ public class MoonIGT0Checker {
 			String rng = String.format("0x%4s", Integer.toHexString(result.getRNG()).toUpperCase()).replace(' ', '0');
 			if(result.getSpecies() == 0) {
 				target.printf("[%d][%d] No encounter at [%d#%d,%d]; rng %s %s\n", second, frame, result.getMap(), result.getX(), result.getY(), rng, printNPCTimers ? "npctimers " + result.getNpcTimers() : "");
+				if(writeStates) {
+					if(result.getSave() == null) {
+						System.err.println("Write state files is enabled, however no save file has been saved for frame " + i);
+					} else {
+						Util.writeBytesToFile("./states/" + i + ".state", result.getSave());
+					}
+				}
 			} else {
 				target.printf("[%d][%d] Encounter at [%d#%d,%d]: %s lv%d DVs %04X rng %s %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getSpeciesName(), result.getLevel(), result.getDvs(), rng, printNPCTimers ? "npctimers " + result.getNpcTimers() : "");
 			}
@@ -119,13 +137,22 @@ public class MoonIGT0Checker {
 		String actions[] = path.split(" ");
 		for(int second = 0; second < maxSecond; second++) {
 			for(int frame = 0; frame < 60; frame++) {
+				int index = second * 60 + frame;
+				if(initalStates[index] == null) {
+					continue;
+				}
+				wrap.loadState(initalStates[index]);
+				wrap.advanceTo("joypadOverworld");
 				for(int i = 0; i < NUM_NPCS; i++) {
 					npcTimers[i] = new ArrayList<>();
 				}
-				int index = second * 60 + frame;
-				wrap.loadState(initalStates[index]);
-				wrap.advanceTo("joypadOverworld");
+				if((params & MONITOR_NPC_TIMERS) != 0) {
+					updateNPCTimers(wrap, npcTimers);
+				}
 				for(String action : actions) {
+					if(action.trim().isEmpty()) {
+						continue;
+					}
 					if(!execute(wrap, OverworldAction.fromString(action), itemballs, params)) {
 						break;
 					}
@@ -133,7 +160,7 @@ public class MoonIGT0Checker {
 						updateNPCTimers(wrap, npcTimers);
 					}
 				}
-				igtmap.addResult(wrap, index, npcTimers);
+				igtmap.addResult(wrap, index, npcTimers, (params & CREATE_SAVE_STATES) != 0 ? wrap.saveState() : null);
 			}
 		}
 		return igtmap;
