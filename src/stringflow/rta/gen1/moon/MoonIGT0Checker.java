@@ -38,11 +38,11 @@ public class MoonIGT0Checker {
 		
 		LibgambatteBuilder.buildGambatte(true, 100);
 		int maxSecond = 1;
-		long params = PICKUP_RARE_CANDY | PICKUP_MOON_STONE | MONITOR_NPC_TIMERS | CREATE_SAVE_STATES;
+		long params = PICKUP_RARE_CANDY | PICKUP_MOON_STONE | MONITOR_NPC_TIMERS;
 		boolean printNPCTimers = true;
-		boolean writeStates = true;
+		boolean writeStates = false;
 		String gameName = "yellow";
-		String path = "";
+		String path = "U U U U U U A U U A U U A U U R A R R R R R U U R U U U U U R R R D D";
 		PrintStream target = System.out;
 		
 		if(!new File("roms").exists()) {
@@ -80,7 +80,7 @@ public class MoonIGT0Checker {
 		wrap.advanceTo(igtInjectAddr);
 		ByteBuffer igtState = gb.saveState();
 		ByteBuffer initalStates[] = new ByteBuffer[maxSecond * 60];
-		for(int second = 39; second < 40; second++) {
+		for(int second = 0; second < maxSecond; second++) {
 			for(int frame = 0; frame < 60; frame++) {
 				gb.loadState(igtState);
 				wrap.write("wPlayTimeSeconds", second);
@@ -88,7 +88,7 @@ public class MoonIGT0Checker {
 				cont.execute(wrap);
 				cont.execute(wrap);
 				wrap.advanceTo("joypadOverworld");
-				initalStates[0 * 60 + frame] = gb.saveState();
+				initalStates[second * 60 + frame] = gb.saveState();
 			}
 		}
 		IGTMap map = checkIGT0(wrap, gameName, initalStates, path, params);
