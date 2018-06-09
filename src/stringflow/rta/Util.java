@@ -59,6 +59,14 @@ public class Util {
 		return builder.toString();
 	}
 	
+	public static void sleep(long ms) {
+		try {
+			Thread.sleep(ms);
+		} catch(InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static String getSpriteAddressIndexString(int addressIndex) {
 		String result = addressIndex == 0 ? "Player" : String.valueOf(addressIndex);
 		return result.length() == 1 ? "0" + result : result;

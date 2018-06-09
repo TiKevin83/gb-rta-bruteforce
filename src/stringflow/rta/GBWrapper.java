@@ -15,6 +15,7 @@ public class GBWrapper {
 	private int hRandomAdd;
 	private int hRandomSub;
 	private int heldJoypad;
+	private long sleepTime;
 	
 	public GBWrapper(Gb gb, String symFile, int hJoypad, int hRandomAdd, int hRandomSub) throws IOException {
 		this.gb = gb;
@@ -23,6 +24,7 @@ public class GBWrapper {
 		this.hRandomAdd = hRandomAdd;
 		this.hRandomSub = hRandomSub;
 		this.heldJoypad = 0;
+		this.sleepTime = 0;
 		long startTime = System.currentTimeMillis();
 		String symFileContent = Util.readTextFile(symFile);
 		String lines[] = symFileContent.split("\n");
@@ -49,21 +51,19 @@ public class GBWrapper {
 	public void press(int joypad) {
 		injectInput(joypad | heldJoypad);
 		gb.step(joypad | heldJoypad);
+		Util.sleep(sleepTime);
 	}
 	
 	public void advanceFrame() {
 		advance(1);
+		Util.sleep(sleepTime);
 	}
 	
 	public void advance(int amount) {
 		injectInput(heldJoypad);
 		for(int i = 0; i < amount; i++) {
 			gb.step(heldJoypad);
-			try {
-				Thread.sleep(5);
-			} catch(InterruptedException e) {
-				e.printStackTrace();
-			}
+			Util.sleep(sleepTime);
 		}
 	}
 	
@@ -80,6 +80,7 @@ public class GBWrapper {
 			} else {
 				result = gb.step(heldJoypad, addressesAsInts);
 			}
+			Util.sleep(sleepTime);
 		}
 		return new Address(getAddressName(result), result);
 	}
@@ -142,5 +143,19 @@ public class GBWrapper {
 	
 	public int getRandomSub() {
 		return read(hRandomSub);
+	}
+	
+	public void setSleepTime(long sleepTime) {
+		this.sleepTime = sleepTime;
+	}
+	
+	public String getGameName() {
+		String result = "";
+		int address = 0x0134;
+		byte character;
+		while((character  = (byte) read(address++)) != 0x00) {
+			result += (char) character;
+		}
+		return result;
 	}
 }

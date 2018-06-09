@@ -1,10 +1,10 @@
-package stringflow.rta.gen1.moon;
+package stringflow.rta.gen1.encounterigt;
 
 import stringflow.rta.gen1.data.Species;
 
 import java.nio.ByteBuffer;
 
-public class IGTResult {
+public class EncounterIGTResult {
 	
 	public static final int SIZE = 1 + 1 + 1 + 2 + (4 * 14) + 1 + 1 + 2 + 1 + 1 + 1 + 1;
 
@@ -22,7 +22,7 @@ public class IGTResult {
 	private boolean redbarYoloball;
 	private boolean redbarSelectYoloball;
 	
-	public IGTResult(int map, int x, int y, int rng, String npcTimers, ByteBuffer save, int species, int level, int dvs, boolean yoloball, boolean selectYoloball, boolean redbarYoloball, boolean redbarSelectYoloball) {
+	public EncounterIGTResult(int map, int x, int y, int rng, String npcTimers, ByteBuffer save, int species, int level, int dvs, boolean yoloball, boolean selectYoloball, boolean redbarYoloball, boolean redbarSelectYoloball) {
 		this.map = map;
 		this.x = x;
 		this.y = y;

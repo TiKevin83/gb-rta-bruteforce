@@ -6,6 +6,8 @@ public class PokeRedBlue {
 
     public static final int igtInjectAddr = 0x7366A;
     public static final int biosReadKeypad = 0x021D;
+	public static final int catchSuccess = 0xD868;
+	public static final int catchFailure = 0xD922;
 
     public static final int hRandomAdd = 0xFFD3;
     public static final int hRandomSub = 0xFFD4;

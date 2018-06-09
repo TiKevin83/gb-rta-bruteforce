@@ -1,6 +1,6 @@
 package stringflow.rta.gen1;
 
-import stringflow.rta.gen1.moon.Checkpoint;
+import stringflow.rta.gen1.encounterigt.Checkpoint;
 
 import java.nio.ByteBuffer;
 

@@ -1,4 +1,4 @@
-package stringflow.rta.gen1.moon;
+package stringflow.rta.gen1.encounterigt;
 
 import mrwint.gbtasgen.Gb;
 import stringflow.rta.GBWrapper;
@@ -35,10 +35,10 @@ public class MoonBot {
 	
 	static {
 		gameName = "yellow";
-		params = MoonIGT0Checker.PICKUP_RARE_CANDY |
-				 MoonIGT0Checker.PICKUP_MOON_STONE |
-				 MoonIGT0Checker.MONITOR_NPC_TIMERS |
-				 MoonIGT0Checker.CREATE_SAVE_STATES;
+		params = EncounterIGT0Checker.PICKUP_RARE_CANDY |
+				 EncounterIGT0Checker.PICKUP_MOON_STONE |
+				 EncounterIGT0Checker.MONITOR_NPC_TIMERS |
+				 EncounterIGT0Checker.CREATE_SAVE_STATES;
 		checkpoints = new Checkpoint[] {
 				new Checkpoint(59, 34, 31, 8, 0, 60),
 		};
@@ -147,7 +147,7 @@ public class MoonBot {
 			OverworldState newState;
 			int owFrames = ow.getOverworldFrames() + edge.getFrames();
 			wrap.hold(0);
-			IGTMap igtMap = MoonIGT0Checker.checkIGT0(wrap, gameName, ow.getSaves(), edgeAction.logStr(), params);
+			EncounterIGTMap igtMap = EncounterIGT0Checker.checkIGT0(wrap, ow.getSaves(), edgeAction.logStr(), params);
 			int encounterIgt0 = 60;
 			HashSet<String> npcs = new HashSet<>();
 			ByteBuffer newSaves[] = new ByteBuffer[60];

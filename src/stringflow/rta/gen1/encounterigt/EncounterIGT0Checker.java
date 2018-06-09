@@ -1,31 +1,31 @@
-package stringflow.rta.gen1.moon;
+package stringflow.rta.gen1.encounterigt;
 
-import mrwint.gbtasgen.Gb;
 import stringflow.rta.*;
 import stringflow.rta.gen1.Itemball;
 import stringflow.rta.gen1.OverworldAction;
 import stringflow.rta.gen1.PokeRedBlue;
+import stringflow.rta.gen1.PokeYellow;
+import stringflow.rta.gen1.data.Species;
 
-import java.io.File;
-import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import static stringflow.rta.Joypad.*;
-import static stringflow.rta.gen1.PokeYellow.*;
 
-public class MoonIGT0Checker {
+public class EncounterIGT0Checker {
 	
 	public static final int NONE = 0;
-	public static final int PICKUP_RARE_CANDY = 1;
-	public static final int PICKUP_ESCAPE_ROPE = 2;
-	public static final int PICKUP_MEGA_PUNCH = 4;
-	public static final int PICKUP_MOON_STONE = 8;
-	public static final int PICKUP_WATER_GUN = 16;
-	public static final int YOLOBALL_PARAS = 32;
-	public static final int SELECT_YOLOBALL_PARAS = 64;
-	public static final int MONITOR_NPC_TIMERS = 128;
-	public static final int CREATE_SAVE_STATES = 256;
+	public static final int PICKUP_RARE_CANDY = 256;
+	public static final int PICKUP_ESCAPE_ROPE = 512;
+	public static final int PICKUP_MEGA_PUNCH = 1024;
+	public static final int PICKUP_MOON_STONE = 2048;
+	public static final int PICKUP_WATER_GUN = 4096;
+	public static final int YOLOBALL = 8192;
+	public static final int SELECT_YOLOBALL = 16384;
+	public static final int REDBAR_YOLOBALL = 32768;
+	public static final int REDBAR_SELECT_YOLOBALL = 65536;
+	public static final int MONITOR_NPC_TIMERS = 131072;
+	public static final int CREATE_SAVE_STATES = 262144;
 	
 	private static final int NUM_NPCS = 15;
 	private static final Itemball WATER_GUN = new Itemball(0xC, new Location(59, 0x5, 0x1F), new Location(59, 0x6, 0x20));
@@ -34,87 +34,13 @@ public class MoonIGT0Checker {
 	private static final Itemball MOON_STONE = new Itemball(0x9, new Location(59, 0x3, 0x2), new Location(59, 0x2, 0x3));
 	private static final Itemball MEGA_PUNCH = new Itemball(0x9, new Location(61, 0x1C, 0x5));
 	
-	public static void main(String args[]) throws Exception {
-		
-		LibgambatteBuilder.buildGambatte(true, 100);
-		int maxSecond = 1;
-		long params = PICKUP_RARE_CANDY | PICKUP_MOON_STONE | MONITOR_NPC_TIMERS;
-		boolean printNPCTimers = true;
-		boolean writeStates = false;
-		String gameName = "yellow";
-		String path = "U U U U U U A U U A U U A U U R A R R R R R U U R U U U U U R R R D D";
-		PrintStream target = System.out;
-		
-		if(!new File("roms").exists()) {
-			new File("roms").mkdir();
-			System.err.println("I need ROMs to simulate!");
-			System.exit(0);
-		}
-		if(!new File("states").exists()) {
-			new File("states").mkdir();
-		}
-		if(!new File("roms/poke" + gameName + ".gbc").exists()) {
-			System.err.println("Could not find poke" + gameName + ".gbc in roms directory!");
-			System.exit(0);
-		}
-		if(!new File("roms/poke" + gameName + ".sym").exists()) {
-			System.err.println("Could not find poke" + gameName + ".sym in roms directory!");
-			System.exit(0);
-		}
-		if(writeStates) {
-			for(File file : new File("states").listFiles()) {
-				file.delete();
-			}
-		}
-		
-		Gb.loadGambatte(1);
-		Gb gb = new Gb(0, false);
-		gb.startEmulator("roms/poke" + gameName + ".gbc");
-		GBWrapper wrap = new GBWrapper(gb, "roms/poke" + gameName + ".sym", hJoypad, hRandomAdd, hRandomSub);
-		if(!gameName.equalsIgnoreCase("yellow")) {
-			PokeRedBlue.nopal.execute(wrap);
-		}
-		gfSkip.execute(wrap);
-		intro0.execute(wrap);
-		title.execute(wrap);
-		wrap.advanceTo(igtInjectAddr);
-		ByteBuffer igtState = gb.saveState();
-		ByteBuffer initalStates[] = new ByteBuffer[maxSecond * 60];
-		for(int second = 0; second < maxSecond; second++) {
-			for(int frame = 0; frame < 60; frame++) {
-				gb.loadState(igtState);
-				wrap.write("wPlayTimeSeconds", second);
-				wrap.write("wPlayTimeFrames", frame);
-				cont.execute(wrap);
-				cont.execute(wrap);
-				wrap.advanceTo("joypadOverworld");
-				initalStates[second * 60 + frame] = gb.saveState();
-			}
-		}
-		IGTMap map = checkIGT0(wrap, gameName, initalStates, path, params);
-		map.save("./igtmap.bin");
-		for(int i = 0; i < map.getSize(); i++) {
-			int second = i / 60;
-			int frame = i % 60;
-			IGTResult result = map.getResult(i);
-			String rng = String.format("0x%4s", Integer.toHexString(result.getRNG()).toUpperCase()).replace(' ', '0');
-			if(result.getSpecies() == 0) {
-				target.printf("[%d][%d] No encounter at [%d#%d,%d]; rng %s %s\n", second, frame, result.getMap(), result.getX(), result.getY(), rng, printNPCTimers ? "npctimers " + result.getNpcTimers() : "");
-				if(writeStates) {
-					if(result.getSave() == null) {
-						System.err.println("Write state files is enabled, however no save file has been saved for frame " + i);
-					} else {
-						Util.writeBytesToFile("./states/" + i + ".state", result.getSave());
-					}
-				}
-			} else {
-				target.printf("[%d][%d] Encounter at [%d#%d,%d]: %s lv%d DVs %04X rng %s %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getSpeciesName(), result.getLevel(), result.getDvs(), rng, printNPCTimers ? "npctimers " + result.getNpcTimers() : "");
-			}
-			target.flush();
-		}
-	}
+	private static GBWrapper wrap;
+	private static long params;
+	private static boolean yoloballs[];
 	
-	public static IGTMap checkIGT0(GBWrapper wrap, String gameName, ByteBuffer initalStates[], String path, long params) {
+	public static EncounterIGTMap checkIGT0(GBWrapper wrap, ByteBuffer initalStates[], String path, long params) {
+		EncounterIGT0Checker.wrap = wrap;
+		EncounterIGT0Checker.params = params;
 		ArrayList<Itemball> itemballs = new ArrayList<>();
 		if((params & PICKUP_RARE_CANDY) != 0) {
 			itemballs.add(RARE_CANDY);
@@ -133,7 +59,7 @@ public class MoonIGT0Checker {
 		}
 		int maxSecond = (int)Math.ceil(initalStates.length / 60);
 		ArrayList<Integer>[] npcTimers = new ArrayList[NUM_NPCS];
-		IGTMap igtmap = new IGTMap(maxSecond);
+		EncounterIGTMap igtmap = new EncounterIGTMap(maxSecond);
 		String actions[] = path.split(" ");
 		for(int second = 0; second < maxSecond; second++) {
 			for(int frame = 0; frame < 60; frame++) {
@@ -146,6 +72,7 @@ public class MoonIGT0Checker {
 				for(int i = 0; i < NUM_NPCS; i++) {
 					npcTimers[i] = new ArrayList<>();
 				}
+				yoloballs = new boolean[4];
 				if((params & MONITOR_NPC_TIMERS) != 0) {
 					updateNPCTimers(wrap, npcTimers);
 				}
@@ -153,20 +80,20 @@ public class MoonIGT0Checker {
 					if(action.trim().isEmpty()) {
 						continue;
 					}
-					if(!execute(wrap, OverworldAction.fromString(action), itemballs, params)) {
+					if(!execute(OverworldAction.fromString(action), itemballs)) {
 						break;
 					}
 					if((params & MONITOR_NPC_TIMERS) != 0) {
 						updateNPCTimers(wrap, npcTimers);
 					}
 				}
-				igtmap.addResult(wrap, index, npcTimers, (params & CREATE_SAVE_STATES) != 0 ? wrap.saveState() : null);
+				igtmap.addResult(wrap, index, npcTimers, (params & CREATE_SAVE_STATES) != 0 ? wrap.saveState() : null, yoloballs);
 			}
 		}
 		return igtmap;
 	}
 	
-	private static boolean execute(GBWrapper wrap, OverworldAction owAction, ArrayList<Itemball> itemballs, long params) {
+	private static boolean execute(OverworldAction owAction, ArrayList<Itemball> itemballs) {
 		Address res;
 		switch(owAction) {
 			case LEFT:
@@ -195,6 +122,9 @@ public class MoonIGT0Checker {
 								wrap.advanceFrame();
 								wrap.advanceFrame();
 								wrap.advanceFrame();
+								if((params & 0xFF) == wrap.read("wEnemyMonSpecies")) {
+									simulateYoloball();
+								}
 								return false;
 							}
 						}
@@ -216,6 +146,9 @@ public class MoonIGT0Checker {
 						wrap.advanceFrame();
 						wrap.advanceFrame();
 						wrap.advanceFrame();
+						if((params & 0xFF) == wrap.read("wEnemyMonSpecies")) {
+							simulateYoloball();
+						}
 						return false;
 					}
 					wrap.hold(0);
@@ -288,6 +221,66 @@ public class MoonIGT0Checker {
 		}
 	}
 	
+	private static void simulateYoloball() {
+		wrap.advanceTo("manualTextScroll");
+		ByteBuffer hpSave = wrap.saveState();
+		int currentHPAddress = wrap.getAddress("wPartyMon1HP") + 1;
+		if((params & YOLOBALL) != 0 || (params & SELECT_YOLOBALL) != 0) {
+			wrap.write(currentHPAddress, wrap.read(wrap.getAddress("wPartyMon1Stats") + 1));
+			executeYoloball((params & YOLOBALL) != 0, (params & SELECT_YOLOBALL) != 0, 0);
+		}
+		if((params & REDBAR_YOLOBALL) != 0 || (params & REDBAR_SELECT_YOLOBALL) != 0) {
+			wrap.loadState(hpSave);
+			wrap.write(currentHPAddress, 1);
+			executeYoloball((params & REDBAR_YOLOBALL) != 0, (params & REDBAR_SELECT_YOLOBALL) != 0, 2);
+		}
+	}
+	
+	private static void executeYoloball(boolean regular, boolean select, int indexOffset) {
+		wrap.hold(0);
+		boolean isYellow = wrap.getGameName().contains("YELLOW");
+		wrap.press(A);
+		wrap.advanceTo(isYellow && wrap.read("wPartySpecies") == Species.PIKACHU.getIndexNumber() ? "PlayPikachuSoundClip" : "playCry");
+		ByteBuffer ballToss = wrap.saveState();
+		if(regular) {
+			if(isYellow) {
+				wrap.advanceTo("joypad");
+				wrap.press(DOWN);
+				wrap.advanceTo("joypad");
+				wrap.press(A);
+				wrap.advanceTo("joypad");
+				wrap.hold(A | B);
+				yoloballs[indexOffset] = wrap.advanceTo(PokeYellow.catchSuccess, PokeYellow.catchFailure).getAddress() == PokeYellow.catchSuccess;
+			} else {
+				wrap.hold(DOWN | A);
+				wrap.advanceTo("displayListMenuId");
+				wrap.hold(A | RIGHT);
+				yoloballs[indexOffset] = wrap.advanceTo(PokeRedBlue.catchSuccess, PokeRedBlue.catchFailure).getAddress() == PokeRedBlue.catchSuccess;
+			}
+		}
+		if(select) {
+			wrap.loadState(ballToss);
+			if(isYellow) {
+				wrap.advanceTo("joypad");
+				wrap.press(DOWN);
+				wrap.advanceTo("joypad");
+				wrap.press(A);
+				wrap.advanceTo("joypad");
+				wrap.press(SELECT);
+				wrap.hold(A);
+				yoloballs[indexOffset + 1] = wrap.advanceTo(PokeYellow.catchSuccess, PokeYellow.catchFailure).getAddress() == PokeYellow.catchSuccess;
+			} else {
+				wrap.hold(DOWN | A);
+				wrap.advanceTo("displayListMenuId");
+				wrap.hold(0);
+				wrap.advanceTo("joypad");
+				wrap.press(SELECT);
+				wrap.hold(A);
+				yoloballs[indexOffset + 1] = wrap.advanceTo(PokeRedBlue.catchSuccess, PokeRedBlue.catchFailure).getAddress() == PokeRedBlue.catchSuccess;
+			}
+		}
+	}
+	
 	private static void updateNPCTimers(GBWrapper wrap, ArrayList<Integer> timers[]) {
 		for(int index = 1; index < NUM_NPCS; index++) {
 			String addressPrefix = "wSprite" + Util.getSpriteAddressIndexString(index);
@@ -311,11 +304,11 @@ public class MoonIGT0Checker {
 		int x = wrap.read("wXCoord");
 		int y = wrap.read("wYCoord");
 		if(input == LEFT) {
-			return new Location(map, x - 1, y);
+			return new Location(map, x == 0 ? 255 : x - 1, y);
 		} else if(input == RIGHT) {
 			return new Location(map, x + 1, y);
 		} else if(input == UP) {
-			return new Location(map, x, y - 1);
+			return new Location(map, x, y == 0 ? 255 : y - 1);
 		} else if(input == DOWN) {
 			return new Location(map, x, y + 1);
 		} else {

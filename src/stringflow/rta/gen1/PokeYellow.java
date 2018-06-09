@@ -5,38 +5,8 @@ import static stringflow.rta.Joypad.*;
 public class PokeYellow {
 
 	public static final int igtInjectAddr = 0x739D6;
-
-	/* obsolete
-	public static final int readJoypad = 0x01B9;
-	public static final int joypadOverworld = 0x0C51;
-	public static final int newBattle = 0x0480;
-	public static final int enterMap = 0x01D7;
-	public static final int encounterTest = 0x1388E;
-	public static final int saveInject = 0x739D6;
-	public static final int pikaInject = 0x739E7;
-	public static final int manualTextScroll = 0x388E;
-	public static final int playCry = 0x118B;
-	public static final int playPikachuSoundClip = 0xF0000;
-	public static final int displayListMenuId = 0x2AE0;
-	public static final int igtInject = 0x739D6;
 	public static final int catchSuccess = 0xD4D4;
 	public static final int catchFailure = 0xD4D6;
-	public static final int textJingleCommand = 0x1A0A;
-	public static final int textJingleHidden = 0x75FAA;
-	public static final int printLetterDelay = 0x38C8;
-	public static final int displayTextBoxId = 0x3010;
-    public static final int delayAtEndOfShootingStar = 0x41A74;
-    public static final int softReset = 0x1D05;
-    public static final int pikaIntro2 = 0xF996A;
-    public static final int pikaIntro4 = 0xF9A1E;
-    public static final int pikaIntro6 = 0xF9A6B;
-    public static final int pikaIntro8 = 0xF9AD8;
-    public static final int pikaIntro10 = 0xF9B04;
-    public static final int pikaIntro12 = 0xF9CAC;
-    public static final int titleScreen = 0x4171;
-    public static final int damageRollCalculation = 0x3E82A;
-    public static final int displayNamingScreen = 0x6307;
-	*/
 
 	public static final int hRandomAdd = 0xFFD3;
 	public static final int hRandomSub = 0xFFD4;

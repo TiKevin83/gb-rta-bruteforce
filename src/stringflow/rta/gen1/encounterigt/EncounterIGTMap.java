@@ -1,4 +1,4 @@
-package stringflow.rta.gen1.moon;
+package stringflow.rta.gen1.encounterigt;
 
 import stringflow.rta.GBWrapper;
 import stringflow.rta.Util;
@@ -9,15 +9,15 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-public class IGTMap {
+public class EncounterIGTMap {
 
-	private IGTResult resultMap[];
+	private EncounterIGTResult resultMap[];
 	
-	public IGTMap(int size) {
-		resultMap = new IGTResult[size * 60];
+	public EncounterIGTMap(int size) {
+		resultMap = new EncounterIGTResult[size * 60];
 	}
 	
-	public void addResult(GBWrapper wrap, int index, ArrayList<Integer>[] npcTimers, ByteBuffer save) {
+	public void addResult(GBWrapper wrap, int index, ArrayList<Integer>[] npcTimers, ByteBuffer save, boolean yoloballs[]) {
 		String npcTimersString = "";
 		for(int i = 1; i < npcTimers.length; i++) {
 			long timerId = 0x00000000;
@@ -35,17 +35,17 @@ public class IGTMap {
 			}
 		}
 		int hRandom = (wrap.getRandomAdd() << 8) | wrap.getRandomSub();
-		resultMap[index] = new IGTResult(wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), hRandom, npcTimersString, save, wrap.read("wEnemyMonSpecies"),
+		resultMap[index] = new EncounterIGTResult(wrap.read("wCurMap"), wrap.read("wXCoord"), wrap.read("wYCoord"), hRandom, npcTimersString, save, wrap.read("wEnemyMonSpecies"),
 												wrap.read("wEnemyMonLevel"), (wrap.read("wEnemyMonDVs") << 8) | (wrap.read(wrap.getAddress("wEnemyMonDVs") + 1)),
-											    false, false, false, false);
+											    yoloballs[0], yoloballs[1], yoloballs[2], yoloballs[3]);
 	}
 	
 	public void save(String path) throws IOException {
-		byte igtMapAsBytes[] = new byte[resultMap.length * IGTResult.SIZE + 3 + 4 + 4 + 2];
+		byte igtMapAsBytes[] = new byte[resultMap.length * EncounterIGTResult.SIZE + 3 + 4 + 4 + 2];
 		byte header[] = "IGT".getBytes();
 		int pointer = 0;
 		pointer = Util.writeByteArray(igtMapAsBytes, pointer, header);
-		pointer = Util.writeInt(igtMapAsBytes, pointer, IGTResult.SIZE);
+		pointer = Util.writeInt(igtMapAsBytes, pointer, EncounterIGTResult.SIZE);
 		pointer = Util.writeInt(igtMapAsBytes, pointer, resultMap.length);
 		pointer = Util.writeByte(igtMapAsBytes, pointer, (byte)0xFF);
 		pointer = Util.writeByte(igtMapAsBytes, pointer, (byte)0xFF);
@@ -68,7 +68,7 @@ public class IGTMap {
 		stream.close();
 	}
 	
-	public IGTResult getResult(int index) {
+	public EncounterIGTResult getResult(int index) {
 		return resultMap[index];
 	}
 	
