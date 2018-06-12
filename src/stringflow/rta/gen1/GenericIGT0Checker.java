@@ -19,20 +19,17 @@ import static stringflow.rta.gen1.PokeRedBlue.*;
 public class GenericIGT0Checker {
 	
 	public static void main(String args[]) throws Exception {
-		
 		LibgambatteBuilder.buildGambatte(true, 100);
 		int maxSecond = 1;
-		long params = EncounterIGT0Checker.YOLOBALL |
-					  EncounterIGT0Checker.SELECT_YOLOBALL |
-					  EncounterIGT0Checker.REDBAR_YOLOBALL |
-					  EncounterIGT0Checker.REDBAR_SELECT_YOLOBALL |
-					  Species.NIDORAN_MALE.getIndexNumber();
-		boolean printNPCTimers = false;
-		boolean writeStates = false;
+		long params = EncounterIGT0Checker.PICKUP_MOON_STONE |
+					  EncounterIGT0Checker.MONITOR_NPC_TIMERS |
+				      EncounterIGT0Checker.CREATE_SAVE_STATES;
+		boolean printNPCTimers = true;
+		boolean writeStates = true;
 		//String gameName = "yellow";
 		//String path = "U R A R U";
-		String gameName = "blue";
-		String path = "L L L L L D S_A_B_S D S_B A D L L L U";
+		String gameName = "red";
+		String path = "L L L L L L L L D D D D D D D D D D L L L L L U U U U U U U U U U U U U U U L L L L L L L L D D R R D D D D D D D D D D D D D R R R R R R R R R R R R R R R A R ";
 		PrintStream target = System.out;
 		
 		if(!new File("roms").exists()) {
@@ -98,10 +95,14 @@ public class GenericIGT0Checker {
 					}
 				}
 			} else {
-				target.printf("[%d][%d] Encounter at [%d#%d,%d]: %s lv%d DVs %04X rng %s %b %b %b %b %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getSpeciesName(), result.getLevel(), result.getDvs(), rng, result.getYoloball(), result.getSelectYoloball(), result.getRedbarYoloball(), result.getSelectYoloball(), printNPCTimers ? "npctimers " + result.getNpcTimers() : "");
+				target.printf("[%d][%d] Encounter at [%d#%d,%d]: %s lv%d DVs %04X rng %s %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getSpeciesName(), result.getLevel(), result.getDvs(), rng, printNPCTimers ? "npctimers " + result.getNpcTimers() : "");
 			}
 			target.flush();
 		}
 		System.out.println(successes + "/" + initalStates.length);
+	}
+	
+	private static int readIGT(GBWrapper wrap) {
+		return wrap.read("wPlayTimeMinutes") * 3600 + wrap.read("wPlayTimeSeconds") * 60 + wrap.read("wPlayTimeFrames");
 	}
 }

@@ -5,6 +5,7 @@ import stringflow.rta.gen1.Itemball;
 import stringflow.rta.gen1.OverworldAction;
 import stringflow.rta.gen1.PokeRedBlue;
 import stringflow.rta.gen1.PokeYellow;
+import stringflow.rta.gen1.data.Map;
 import stringflow.rta.gen1.data.Species;
 
 import java.nio.ByteBuffer;
@@ -87,7 +88,7 @@ public class EncounterIGT0Checker {
 						updateNPCTimers(wrap, npcTimers);
 					}
 				}
-				igtmap.addResult(wrap, index, npcTimers, (params & CREATE_SAVE_STATES) != 0 ? wrap.saveState() : null, yoloballs);
+				igtmap.addResult(wrap, index, npcTimers, (params & CREATE_SAVE_STATES) != 0 && wrap.read("wEnemyMonSpecies") == 0 ? wrap.saveState() : null, yoloballs);
 			}
 		}
 		return igtmap;
@@ -109,10 +110,6 @@ public class EncounterIGT0Checker {
 				if(result.equals("manualTextScroll")) {
 					return false;
 				}
-                /*if(Map.getMapByID(dest.map).getTile(dest.x, dest.y).isWarp()) {
-                    wrap.advanceTo("enterMap");
-                    transitionTimes.add(readIGT());
-                }*/
 				while(wrap.read("wXCoord") != dest.x || wrap.read("wYCoord") != dest.y) {
 					if(result.equals("newBattle")) {
 						Address result2 = wrap.advanceTo(encounterTest, "joypadOverworld");

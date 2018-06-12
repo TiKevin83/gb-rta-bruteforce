@@ -1,4 +1,4 @@
-package stringflow.rta.gen1;
+package stringflow.rta;
 
 import stringflow.rta.GBWrapper;
 
