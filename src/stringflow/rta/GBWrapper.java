@@ -25,23 +25,25 @@ public class GBWrapper {
 		this.hRandomSub = hRandomSub;
 		this.heldJoypad = 0;
 		this.sleepTime = 0;
-		long startTime = System.currentTimeMillis();
-		String symFileContent = Util.readTextFile(symFile);
-		String lines[] = symFileContent.split("\n");
-		for(int i = 0; i < lines.length; i++) {
-			if(lines[i].isEmpty() || lines[i].startsWith(";")) {
-				continue;
+		if(!symFile.trim().isEmpty()) {
+			long startTime = System.currentTimeMillis();
+			String symFileContent = Util.readTextFile(symFile);
+			String lines[] = symFileContent.split("\n");
+			for(int i = 0; i < lines.length; i++) {
+				if(lines[i].isEmpty() || lines[i].startsWith(";")) {
+					continue;
+				}
+				// format: bb:aaaa name
+				int index = Integer.decode("0x" + lines[i].substring(0, lines[i].indexOf(":")));
+				int address = Integer.decode("0x" + lines[i].substring(lines[i].indexOf(":") + 1, lines[i].indexOf(" ")));
+				String name = lines[i].substring(lines[i].indexOf(" ") + 1);
+				if(index == 0 && name.toLowerCase().startsWith("sprite")) {
+					name = "w" + name;
+				}
+				addressMap.put(name.toLowerCase(), index > 1 ? index * 0x4000 + (address - 0x4000) : address);
 			}
-			// format: bb:aaaa name
-			int index = Integer.decode("0x" + lines[i].substring(0, lines[i].indexOf(":")));
-			int address = Integer.decode("0x" + lines[i].substring(lines[i].indexOf(":") + 1, lines[i].indexOf(" ")));
-			String name = lines[i].substring(lines[i].indexOf(" ") + 1);
-			if(index == 0 && name.toLowerCase().startsWith("sprite")) {
-				name = "w" + name;
-			}
-			addressMap.put(name.toLowerCase(), index > 1 ? index * 0x4000 + (address - 0x4000) : address);
+			System.out.println("Read and processed " + symFile + " in " + (System.currentTimeMillis() - startTime) + "ms");
 		}
-		System.out.println("Read and processed " + symFile + " in " + (System.currentTimeMillis() - startTime) + "ms");
 	}
 	
 	public void hold(int heldJoypad) {
@@ -153,8 +155,8 @@ public class GBWrapper {
 		String result = "";
 		int address = 0x0134;
 		byte character;
-		while((character  = (byte) read(address++)) != 0x00) {
-			result += (char) character;
+		while((character = (byte)read(address++)) != 0x00) {
+			result += (char)character;
 		}
 		return result;
 	}
