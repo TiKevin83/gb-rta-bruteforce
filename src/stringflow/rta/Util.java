@@ -4,6 +4,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.util.*;
 
 public class Util {
 	
@@ -65,6 +66,20 @@ public class Util {
 		} catch(InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map, boolean reverse) {
+		List<Map.Entry<K, V>> list = new ArrayList<>(map.entrySet());
+		list.sort(Map.Entry.comparingByValue());
+		if(reverse) {
+			Collections.reverse(list);
+		}
+		Map<K, V> result = new LinkedHashMap<>();
+		for (Map.Entry<K, V> entry : list) {
+			result.put(entry.getKey(), entry.getValue());
+		}
+		
+		return result;
 	}
 	
 	public static String getSpriteAddressIndexString(int addressIndex) {
