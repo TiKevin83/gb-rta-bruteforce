@@ -1,7 +1,9 @@
-package stringflow.rta;
+package stringflow.rta.gen1;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import stringflow.rta.GBWrapper;
 
 public class IntroSequence extends ArrayList<Strat> implements Comparable<IntroSequence> {
 

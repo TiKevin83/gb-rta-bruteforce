@@ -1,7 +1,5 @@
 package stringflow.rta.gen1;
 
-import stringflow.rta.Strat;
-
 import static stringflow.rta.Joypad.*;
 
 public class PokeRedBlue {

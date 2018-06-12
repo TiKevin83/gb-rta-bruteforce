@@ -34,16 +34,16 @@ public class MoonBot {
 	private static OverworldTile savePos;
 	
 	static {
-		gameName = "red";
-		params = EncounterIGT0Checker.PICKUP_MOON_STONE |
+		gameName = "yellow";
+		params = EncounterIGT0Checker.PICKUP_RARE_CANDY |
+				 EncounterIGT0Checker.PICKUP_MOON_STONE |
 				 EncounterIGT0Checker.MONITOR_NPC_TIMERS |
 				 EncounterIGT0Checker.CREATE_SAVE_STATES;
 		checkpoints = new Checkpoint[] {
-				new Checkpoint(59, 3, 2, 16, 0, 59),
-				new Checkpoint(59, 5, 5, 4, 0, 59),
+				new Checkpoint(59, 34, 31, 8, 0, 60),
 		};
-		ignoreFrames.add(36);
-		ignoreFrames.add(37);
+		ignoreFrames.add(33);
+		ignoreFrames.add(34);
 	}
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -77,10 +77,7 @@ public class MoonBot {
 		partialManips = new PrintWriter(new File(gameName + "_partial_moon_paths.txt"));
 		
 		long startTime = System.currentTimeMillis();
-		OverworldTile[][] owTiles1 = AStar.initTiles(Map.MT_MOON_1, 17, 3, new MapDestination(Map.MT_MOON_1, new Location(3, 2)));
-		OverworldTile[][] owTiles2 = AStar.initTiles(Map.MT_MOON_1, 17, 3, new MapDestination(Map.MT_MOON_1, new Location(5, 5)));
-		
-		owTiles1[4][2].getEdge(OverworldAction.LEFT).setNextPos(owTiles2[3][2]);
+		OverworldTile[][] owTiles1 = AStar.initTiles(Map.MT_MOON_1, 17, 3, new MapDestination(Map.MT_MOON_1, new Location(34, 31)));
 		
 		long endTime = System.currentTimeMillis();
 		System.out.println("Generic edge generation time: " + (endTime - startTime) + " ms");
@@ -188,7 +185,7 @@ public class MoonBot {
 						}
 					}
 					if(edge.getNextPos().getX() == lastCheckpoint.getX() && edge.getNextPos().getY() == lastCheckpoint.getY() && edge.getNextPos().getMap() == lastCheckpoint.getMap() && encounterIgt0 >= lastCheckpoint.getMinConsistency()) {
-						foundManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames) + " - " + encounterIgt0 + "/60 " + npcs.size() + " differences");
+						foundManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames) + " - " + encounterIgt0 + "/60 hra=" + wrap.read(hRandomAdd) + " timer1=" + wrap.read("wSprite" + Util.getSpriteAddressIndexString(4) + "MovementDelay") + " timer2=" + wrap.read("wSprite" + Util.getSpriteAddressIndexString(10) + "MovementDelay"));
 						foundManips.flush();
 						break;
 					}
