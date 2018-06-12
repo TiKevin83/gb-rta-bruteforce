@@ -16,7 +16,6 @@ movies/*
 roms/*
 testroms*/*
 saves/*
-baseSaves/*
 assembly/dk.asm
 assembly/sml2_10.asm
 assembly/tetris10.asm
@@ -62,7 +61,6 @@ src/dabomstew/rta/mtmoon/UniquePathList.java
 src/dabomstew/rta/nidobot/TestMe.java
 
 # dumb stuff
-*.sav
 *.gb
 *.gbc
 *.sym
