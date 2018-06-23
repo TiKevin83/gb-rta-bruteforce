@@ -2,10 +2,12 @@ package stringflow.rta.gen1.encounterigt;
 
 import mrwint.gbtasgen.Gb;
 import stringflow.rta.GBWrapper;
-import stringflow.rta.LibgambatteBuilder;
 import stringflow.rta.Location;
 import stringflow.rta.Util;
-import stringflow.rta.gen1.*;
+import stringflow.rta.gen1.OverworldAction;
+import stringflow.rta.gen1.OverworldEdge;
+import stringflow.rta.gen1.OverworldState;
+import stringflow.rta.gen1.OverworldTile;
 import stringflow.rta.gen1.astar.AStar;
 import stringflow.rta.gen1.data.Map;
 import stringflow.rta.gen1.data.MapDestination;
@@ -35,19 +37,13 @@ public class MoonBot {
 	
 	static {
 		gameName = "yellow";
-		params = EncounterIGT0Checker.PICKUP_RARE_CANDY |
-				 EncounterIGT0Checker.PICKUP_MOON_STONE |
-				 EncounterIGT0Checker.MONITOR_NPC_TIMERS |
-				 EncounterIGT0Checker.CREATE_SAVE_STATES;
-		checkpoints = new Checkpoint[] {
-				new Checkpoint(59, 34, 31, 8, 0, 60),
-		};
+		params = EncounterIGT0Checker.PICKUP_RARE_CANDY | EncounterIGT0Checker.PICKUP_MOON_STONE | EncounterIGT0Checker.MONITOR_NPC_TIMERS | EncounterIGT0Checker.CREATE_SAVE_STATES;
+		checkpoints = new Checkpoint[] {new Checkpoint(59, 34, 31, 8, 0, 60),};
 		ignoreFrames.add(33);
 		ignoreFrames.add(34);
 	}
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
-		LibgambatteBuilder.buildGambatte(false, 100);
 		if(!new File("roms").exists()) {
 			new File("roms").mkdir();
 			System.err.println("I need ROMs to simulate!");
@@ -85,7 +81,7 @@ public class MoonBot {
 		Gb.loadGambatte(1);
 		gb = new Gb(0, false);
 		gb.startEmulator("roms/poke" + gameName + ".gbc");
-		wrap = new GBWrapper(gb, "roms/poke" + gameName + ".sym", hJoypad, hRandomAdd, hRandomSub);
+		wrap = new GBWrapper(gb, "roms/poke" + gameName + ".sym", new int[] {hJoypad}, hRandomAdd, hRandomSub);
 		wrap.advanceTo("joypad");
 		gb.loadState(initalSaves[0]);
 		wrap.advance(2);

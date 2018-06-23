@@ -1,12 +1,11 @@
-package stringflow.rta.gen2;
+package stringflow.rta.gen2.totodile;
 
 import mrwint.gbtasgen.Gb;
 import stringflow.rta.GBWrapper;
-import stringflow.rta.LibgambatteBuilder;
 import stringflow.rta.Util;
 
-import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
@@ -18,15 +17,15 @@ public class TotodileChecker {
 	public static final int SOUND_STEREO = 0xE1;
 	
 	public static void main(String args[]) throws Exception {
-		String gameName = "gold";
+		String gameName = "crystal";
 		int rtcOffset = 100;
 		int startSecond = 0;
 		int sound = SOUND_STEREO;
-		int minFrame = 163;
-		int maxFrame = 300;
+		int minFrame = 30;
+		int maxFrame = 35;
 		boolean female = true;
-		boolean writeToFile = true;
-		int verbose = 1;
+		boolean writeToFile = false;
+		int verbose = 2;
 		
 		String srcFile;
 		int sGameData;
@@ -37,13 +36,14 @@ public class TotodileChecker {
 		int wGameTimeFrames;
 		int wOptions;
 		int wPartyMon1DVs;
+		int wPartyMon1Stats;
 		int joypad;
 		int manualTextScroll;
 		int hJoypad;
 		int hRandomAdd;
 		int hRandomSub;
 		if(gameName.equalsIgnoreCase("gold") || gameName.equalsIgnoreCase("silver")) {
-			srcFile = "baseSaves/gs_totodile.sav";
+			srcFile = "baseSaves/gs_totodile_10.sav";
 			sGameData = 0x2009;
 			sGameDataEnd = 0x2D69;
 			sChecksum = 0x2D69;
@@ -56,9 +56,10 @@ public class TotodileChecker {
 			manualTextScroll = 0x0A60;
 			hJoypad = 0xFFA6;
 			hRandomAdd = 0xFFE3;
+			wPartyMon1Stats = 0x00;
 			hRandomSub = 0xFFE4;
 		} else if(gameName.equalsIgnoreCase("crystal")) {
-			srcFile = female ? "baseSaves/c_totodile_f.sav" : "baseSaves/c_totodile_m.sav";
+			srcFile = female ? "baseSaves/c_totodile_f_n.sav" : "baseSaves/c_totodile_m.sav";
 			sGameData = 0x2009;
 			sGameDataEnd = 0x2B83;
 			sChecksum = 0x2D0D;
@@ -67,6 +68,7 @@ public class TotodileChecker {
 			wGameTimeFrames = 0xD4C8;
 			wOptions = 0xD472;
 			wPartyMon1DVs = 0xDCF4;
+			wPartyMon1Stats = 0xDD01;
 			joypad = 0x098F;
 			manualTextScroll = 0x0AAF;
 			hJoypad = 0xFFA4;
@@ -76,7 +78,6 @@ public class TotodileChecker {
 			throw new RuntimeException("Unknown game: " + gameName);
 		}
 		
-		LibgambatteBuilder.buildGambatte(false, rtcOffset);
 		Gb.loadGambatte(1);
 		Gb gb;
 		GBWrapper wrap;
@@ -89,8 +90,8 @@ public class TotodileChecker {
 			for(int igtFrame = 0; igtFrame < 60; igtFrame++) {
 				makeSave(srcFile, "roms/poke" + gameName + ".sav", sGameData, sGameDataEnd, sChecksum, wGameData, wStartSecond, wGameTimeFrames, wOptions, startSecond, igtFrame, sound);
 				gb = new Gb(0, false);
-				gb.startEmulator("roms/poke" + gameName + ".gbc");
-				wrap = new GBWrapper(gb, "", hJoypad, hRandomAdd, hRandomSub);
+				gb.startEmulator("roms/poke" + gameName + ".gbc", false, rtcOffset);
+				wrap = new GBWrapper(gb, "", new int[] { hJoypad }, hRandomAdd, hRandomSub);
 				wrap.hold(SELECT);
 				wrap.advanceTo(joypad);
 				wrap.hold(START);
@@ -123,7 +124,13 @@ public class TotodileChecker {
 				wrap.press(B);
 				wrap.hold(B);
 				wrap.advanceTo(manualTextScroll);
-				Totodile totodile = new Totodile((wrap.read(wPartyMon1DVs) << 8) | wrap.read(wPartyMon1DVs + 1));
+				int hp = wrap.read(wPartyMon1Stats + 1);
+				int attack = wrap.read(wPartyMon1Stats + 5);
+				int defense = wrap.read(wPartyMon1Stats + 7);
+				int speed = wrap.read(wPartyMon1Stats + 9);
+				int specialAttack = wrap.read(wPartyMon1Stats + 11);
+				int specialDefense = wrap.read(wPartyMon1Stats + 13);
+				Totodile totodile = new Totodile((wrap.read(wPartyMon1DVs) << 8) | wrap.read(wPartyMon1DVs + 1), hp, attack, defense, specialAttack, specialDefense, speed);
 				igtMap[igtFrame] = totodile;
 				totodileMap.put(totodile, (totodileMap.containsKey(totodile) ? totodileMap.get(totodile) : 0) + 1);
 			}
@@ -138,12 +145,12 @@ public class TotodileChecker {
 					igtString += String.format("%d/60=%04X, ", sortedMap.get(totodile), totodile.getDVs());
 				}
 				target.print("[" + advanceFrame + "] ");
-				target.printf("DVs: 0x%04X (%d/%d/%d/%d/%d)\n", mostCommon.getDVs(), mostCommon.getHP(), mostCommon.getAttack(), mostCommon.getDefense(), mostCommon.getSpecialAttack(), mostCommon.getSpecialDefense(), mostCommon.getSpeed());
+				target.printf("DVs: 0x%04X (%d/%d/%d/%d/%d/%d)\n", mostCommon.getDVs(), mostCommon.getHp(), mostCommon.getAttack(), mostCommon.getDefense(), mostCommon.getSpecialAttack(), mostCommon.getSpecialDefense(), mostCommon.getSpeed());
 				target.println(igtString.substring(0, igtString.length() - 2));
 			} else if(verbose >= 1) {
 				target.println("FRAME " + advanceFrame);
 				for(int i = 0; i < 60; i++) {
-					target.printf("[%d] Totodile: 0x%04X (%d/%d/%d/%d/%d)\n", i, igtMap[i].getDVs(), igtMap[i].getHP(), igtMap[i].getAttack(), igtMap[i].getDefense(), igtMap[i].getSpecialAttack(), igtMap[i].getSpecialDefense(), igtMap[i].getSpeed());
+					target.printf("[%d] Totodile: 0x%04X (%d/%d/%d/%d/%d/%d)\n", i, igtMap[i].getDVs(), igtMap[i].getHp(), igtMap[i].getAttack(), igtMap[i].getDefense(), igtMap[i].getSpecialAttack(), igtMap[i].getSpecialDefense(), igtMap[i].getSpeed());
 				}
 			}
 			target.flush();

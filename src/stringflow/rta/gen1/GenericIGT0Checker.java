@@ -2,7 +2,6 @@ package stringflow.rta.gen1;
 
 import mrwint.gbtasgen.Gb;
 import stringflow.rta.GBWrapper;
-import stringflow.rta.LibgambatteBuilder;
 import stringflow.rta.Util;
 import stringflow.rta.gen1.data.Species;
 import stringflow.rta.gen1.encounterigt.EncounterIGT0Checker;
@@ -19,8 +18,6 @@ import static stringflow.rta.gen1.PokeRedBlue.*;
 public class GenericIGT0Checker {
 	
 	public static void main(String args[]) throws Exception {
-		
-		LibgambatteBuilder.buildGambatte(true, 100);
 		int maxSecond = 1;
 		long params = EncounterIGT0Checker.YOLOBALL |
 					  EncounterIGT0Checker.SELECT_YOLOBALL |
@@ -58,8 +55,8 @@ public class GenericIGT0Checker {
 		}
 		Gb.loadGambatte(1);
 		Gb gb = new Gb(0, false);
-		gb.startEmulator("roms/poke" + gameName + ".gbc");
-		GBWrapper wrap = new GBWrapper(gb, "roms/poke" + gameName + ".sym", hJoypad, hRandomAdd, hRandomSub);
+		gb.startEmulator("roms/poke" + gameName + ".gbc", true, 100);
+		GBWrapper wrap = new GBWrapper(gb, "roms/poke" + gameName + ".sym", new int[] { hJoypad }, hRandomAdd, hRandomSub);
 		if(!gameName.equalsIgnoreCase("yellow")) {
 			PokeRedBlue.nopal.execute(wrap);
 		}

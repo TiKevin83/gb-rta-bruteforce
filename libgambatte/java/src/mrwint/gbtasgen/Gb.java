@@ -50,11 +50,11 @@ public class Gb {
 	private static native void nreset(long gb);
 	
 	public int step(int keymask, int... addresses) {
-		if ((keymask & 0x800) > 0) {
+		if((keymask & 0x800) > 0) {
 			nreset(gb);
 			return 0;
 		}
-		if (addresses.length == 0) {
+		if(addresses.length == 0) {
 			nstep(gb, keymask);
 			return 0;
 		}
@@ -93,7 +93,7 @@ public class Gb {
 	public static final ByteBuffer TMP_SAVE_BUFFER = createDirectByteBuffer(MAX_SAVE_SIZE);
 	
 	public ByteBuffer saveState() {
-		synchronized (TMP_SAVE_BUFFER) {
+		synchronized(TMP_SAVE_BUFFER) {
 			// read state to temporary buffer
 			TMP_SAVE_BUFFER.clear();
 			int size = saveState(gb, TMP_SAVE_BUFFER, TMP_SAVE_BUFFER.capacity());
@@ -113,7 +113,7 @@ public class Gb {
 	}
 	
 	public static ByteBuffer saveDualState(Gb gbL, Gb gbR) {
-		synchronized (TMP_SAVE_BUFFER) {
+		synchronized(TMP_SAVE_BUFFER) {
 			// read state to temporary buffer
 			TMP_SAVE_BUFFER.clear();
 			int size = saveDualState(gbL.gb, gbR.gb, TMP_SAVE_BUFFER, TMP_SAVE_BUFFER.capacity());
@@ -195,7 +195,7 @@ public class Gb {
 	}
 	
 	public double getGbpTime() {
-		double cc = (double) getCycleCount();
+		double cc = (double)getCycleCount();
 		return ((cc / 4194303.96) + 2.16); // 59.7275*70224 + 2.16
 	}
 	
@@ -219,9 +219,8 @@ public class Gb {
 		offsetDiv(gb, offset);
 	}
 	
-	
 	public static void loadGambatte(int numScreens) {
-		if (System.getProperty("os.name").toLowerCase().contains("win")) {
+		if(System.getProperty("os.name").toLowerCase().contains("win")) {
 			System.loadLibrary("cyggambatte");
 		} else {
 			System.loadLibrary("gambatte");

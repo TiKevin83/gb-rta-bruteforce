@@ -3,6 +3,7 @@ package stringflow.rta;
 import mrwint.gbtasgen.Gb;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,13 +12,14 @@ public class GBWrapper {
 	
 	private Gb gb;
 	private HashMap<String, Integer> addressMap;
-	private int hJoypad;
+	private int hJoypad[];
 	private int hRandomAdd;
 	private int hRandomSub;
 	private int heldJoypad;
 	private long sleepTime;
+	private boolean injectInputs;
 	
-	public GBWrapper(Gb gb, String symFile, int hJoypad, int hRandomAdd, int hRandomSub) throws IOException {
+	public GBWrapper(Gb gb, String symFile, int hJoypad[], int hRandomAdd, int hRandomSub) throws IOException {
 		this.gb = gb;
 		this.addressMap = new HashMap<String, Integer>();
 		this.hJoypad = hJoypad;
@@ -25,6 +27,7 @@ public class GBWrapper {
 		this.hRandomSub = hRandomSub;
 		this.heldJoypad = 0;
 		this.sleepTime = 0;
+		this.injectInputs = true;
 		if(!symFile.trim().isEmpty()) {
 			long startTime = System.currentTimeMillis();
 			String symFileContent = Util.readTextFile(symFile);
@@ -42,7 +45,6 @@ public class GBWrapper {
 				}
 				addressMap.put(name.toLowerCase(), index > 1 ? index * 0x4000 + (address - 0x4000) : address);
 			}
-			System.out.println("Read and processed " + symFile + " in " + (System.currentTimeMillis() - startTime) + "ms");
 		}
 	}
 	
@@ -53,6 +55,12 @@ public class GBWrapper {
 	public void press(int joypad) {
 		injectInput(joypad | heldJoypad);
 		gb.step(joypad | heldJoypad);
+		Util.sleep(sleepTime);
+	}
+	
+	public void pressMenu(int joypad) {
+		write(0xFFA4, joypad);
+		gb.step(joypad);
 		Util.sleep(sleepTime);
 	}
 	
@@ -116,9 +124,15 @@ public class GBWrapper {
 	}
 	
 	public void injectInput(int input) {
-		if(read(0xFF88) != 0x3) { // hacked way to tell if in bootrom or not
-			write(hJoypad, input);
+		if(read(0xFF88) != 0x3 && injectInputs) { // hacked way to tell if in bootrom or not
+			for(int i = 0; i < hJoypad.length; i++) {
+				write(hJoypad[i], input);
+			}
 		}
+	}
+	
+	public void setInjectInputs(boolean injectInputs) {
+		this.injectInputs = injectInputs;
 	}
 	
 	public int convertObjectToAddress(Object obj) {
@@ -147,6 +161,10 @@ public class GBWrapper {
 		return read(hRandomSub);
 	}
 	
+	public int getRandomState() {
+		return (getRandomAdd() << 8) | getRandomSub();
+	}
+	
 	public void setSleepTime(long sleepTime) {
 		this.sleepTime = sleepTime;
 	}
@@ -159,5 +177,14 @@ public class GBWrapper {
 			result += (char)character;
 		}
 		return result;
+	}
+	
+	public void dumpAddresses() throws Exception {
+		PrintWriter writer = new PrintWriter(getGameName() + ".dump");
+		for(String address : addressMap.keySet()) {
+			writer.printf("%05X: %s\n", addressMap.get(address), address);
+			writer.flush();
+		}
+		writer.close();
 	}
 }
