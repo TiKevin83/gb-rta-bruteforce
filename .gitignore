@@ -42,7 +42,8 @@ bin/*
 
 # logs
 *.log
-*.txt
+*_foundManips.txt
+*_partial_moon_paths.txt
 log.txt
 *_encounters*.txt
 *enc*.txt
