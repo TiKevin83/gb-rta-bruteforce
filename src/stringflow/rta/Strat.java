@@ -1,32 +1,37 @@
 package stringflow.rta;
 
-public class Strat {
+import stringflow.rta.libgambatte.Gb;
+import stringflow.rta.util.NamedDataType;
 
-    protected String name;
+public class Strat extends NamedDataType {
+
+	protected String logStr;
+	protected String joypadCommand;
     protected int cost;
     protected Object[] addr;
     protected Integer[] input;
     protected Integer[] advanceFrames;
 
-    public Strat(String name, int cost, Object[] addr, Integer[] input, Integer[] advanceFrames) {
+    public Strat(String name, String logStr, String joypadCommand, int cost, Object[] addr, Integer[] input, Integer[] advanceFrames) {
+    	super(name);
+    	this.logStr = logStr;
+    	this.joypadCommand = joypadCommand;
         this.addr = addr;
         this.cost = cost;
-        this.name = name;
         this.input = input;
         this.advanceFrames = advanceFrames;
     }
 
-    public void execute(GBWrapper wrap) {
+    public void execute(Gb gb) {
         for(int i = 0; i < addr.length; i++) {
-            wrap.advanceTo(wrap.convertObjectToAddress(addr[i]));
-            wrap.hold(input[i]);
-            wrap.advance(advanceFrames[i]);
+            gb.advanceTo(addr[i]);
+            gb.hold(input[i]);
+            gb.frameAdvance(advanceFrames[i]);
         }
-        wrap.hold(0);
     }
 
     public String toString() {
-        return name;
+        return logStr;
     }
 
     public int getCost() {

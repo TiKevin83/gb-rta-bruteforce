@@ -25,6 +25,12 @@ temp/*
 logs/*
 oldrngdata/*
 states/*
+libgambatte/*
+out/*
+bin/*
+*.gqs
+*.png
+*.jpg
 
 # binary files
 *.o
