@@ -46,6 +46,15 @@ public class IO {
 		}
 	}
 	
+	public static BufferedImage readImage(String path) {
+		try {
+			return ImageIO.read(new File(path));
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	public static void writeImage(String path, BufferedImage image) {
 		try {
 			String extension = "";

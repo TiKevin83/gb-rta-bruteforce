@@ -5,12 +5,12 @@ import com.sun.jna.Pointer;
 import stringflow.rta.Address;
 import stringflow.rta.BaseGame;
 import stringflow.rta.libgambatte.display.Display;
+import stringflow.rta.libgambatte.display.IDisplayUpdateCallback;
 import stringflow.rta.util.ArrayUtils;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.util.Arrays;
-import java.util.Locale;
+import java.util.ArrayList;
 
 public class Gb {
 	
@@ -39,6 +39,7 @@ public class Gb {
 	private Pointer gbHandle;
 	
 	private Display display;
+	private ArrayList<IDisplayUpdateCallback> updateCallbacks;
 	private BaseGame game;
 
 	private Memory videoBuffer;
@@ -56,6 +57,7 @@ public class Gb {
 	public Gb() {
 		lib = Libgambatte.INSTANCE;
 		gbHandle = lib.gambatte_create();
+		updateCallbacks = new ArrayList<>();
 		frameOverflow = 0;
 		cycleCount = 0;
 		currentJoypad = 0;
@@ -84,6 +86,10 @@ public class Gb {
 			return;
 		}
 		display = new Display(VIDEO_BUFFER_WIDTH, VIDEO_BUFFER_HEIGHT, scale, "My Display!");
+	}
+	
+	public void setOnDisplayUpdate(IDisplayUpdateCallback updateCallback) {
+		updateCallbacks.add(updateCallback);
 	}
 	
 	public void loadRom(String rom, BaseGame game, int flags) {
@@ -133,17 +139,20 @@ public class Gb {
 		lib.gambatte_runfor(gbHandle, videoBuffer, VIDEO_BUFFER_WIDTH, audioBuffer, samples);
 		if(display != null) {
 			display.getRenderContext().drawBuffer(videoBuffer.getIntArray(0, VIDEO_BUFFER_SIZE));
+			for(IDisplayUpdateCallback callback : updateCallbacks) {
+				callback.onUpdate(this, display.getRenderContext(), VIDEO_BUFFER_WIDTH, VIDEO_BUFFER_HEIGHT);
+			}
 			display.swapBuffers();
 		}
 		int hitAddress = lib.gambatte_gethitinterruptaddress(gbHandle);
 		int cyclesPassed = samples.getInt(0);
 		cycleCount += cyclesPassed;
 		frameOverflow = (hitAddress == -1 ? 0 : frameOverflow + cyclesPassed);
-//		try {
-//			Thread.sleep(5);
-//		} catch(InterruptedException e) {
-//			e.printStackTrace();
-//		}
+		try {
+			Thread.sleep(13);
+		} catch(InterruptedException e) {
+			e.printStackTrace();
+		}
 		return hitAddress;
 	}
 	
@@ -190,7 +199,16 @@ public class Gb {
 		}
 	}
 	
-	public BufferedImage saveScreenBuffer() {
+	public int[] getScreenBuffer() {
+		if(display == null) {
+			throw new RuntimeException("You need to create a display to take a screenshot!");
+		}
+		int result[] = new int[VIDEO_BUFFER_SIZE];
+		System.arraycopy(videoBuffer, 0, result, 0, VIDEO_BUFFER_SIZE);
+		return result;
+	}
+	
+	public BufferedImage getScreenBufferAsImage() {
 		if(display == null) {
 			throw new RuntimeException("You need to create a display to take a screenshot!");
 		}
@@ -226,6 +244,16 @@ public class Gb {
 	public double getGbpTime() {
 		double cc = (double)getCycleCount();
 		return ((cc / 2097152.0) + 2.135);
+	}
+	
+	public int getFrameCount() {
+		double cc = getCycleCount();
+		int frameCount = (int) ((cc / 2097152.0) * 59.7275);
+		return frameCount;
+	}
+	
+	public int getCurrentJoypad() {
+		return currentJoypad;
 	}
 	
 	private Address convertAddress(Object address) {

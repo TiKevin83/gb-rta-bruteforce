@@ -29,7 +29,6 @@ libgambatte/*
 out/*
 bin/*
 *.gqs
-*.png
 *.jpg
 */META-INF/*
 
