@@ -106,7 +106,17 @@ public class OverworldState {
 	}
 	
 	public String getUniqId() {
-		return pos.getMap() + "#" + pos.getX() + "," + pos.getY() + "-" + hra + "-" + hrs;
+		return pos.getMap() + "#" + pos.getX() + "," + pos.getY() + "-" + hra + "-" + hrs + "-" + getNumValidSaves();
+	}
+	
+	public int getNumValidSaves() {
+		int result = 0;
+		for(int i = 0; i < saves.length; i++) {
+			if(saves[i] != null) {
+				result++;
+			}
+		}
+		return result;
 	}
 	
 	@Override
@@ -117,11 +127,11 @@ public class OverworldState {
 	@Override
 	public boolean equals(Object other) {
 		OverworldState o = (OverworldState) other;
-		return this.getMap() == o.getMap() && this.getX() == o.getX() && this.getY() == o.getY() && (hrs == -1 || ( this.getHra() == o.getHra() && this.getHrs() == o.getHrs()));
+		return this.getMap() == o.getMap() && this.getX() == o.getX() && this.getY() == o.getY() && (hrs == -1 || ( this.getHra() == o.getHra() && this.getHrs() == o.getHrs())) && this.getNumValidSaves() == o.getNumValidSaves();
 	}
 	
 	@Override
 	public int hashCode() {
-		return this.getMap() + 7 * this.getX() + 13 * this.getY() + (hra != -1 ? hra * 17 + hrs * 19 : 0);
+		return this.getMap() + 7 * this.getX() + 13 * this.getY() + (hra != -1 ? hra * 17 + hrs * 19 : 0) + 27 * this.getNumValidSaves();
 	}
 }

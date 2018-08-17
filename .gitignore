@@ -31,6 +31,7 @@ bin/*
 *.gqs
 *.png
 *.jpg
+*/META-INF/*
 
 # binary files
 *.o

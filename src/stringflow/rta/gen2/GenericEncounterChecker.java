@@ -1,12 +1,13 @@
 package stringflow.rta.gen2;
 
 import stringflow.rta.Address;
-import stringflow.rta.Species;
 import stringflow.rta.encounterigt.EncounterIGTMap;
 import stringflow.rta.libgambatte.Gb;
 import stringflow.rta.util.IGTTimeStamp;
+import stringflow.rta.util.IO;
 
-import static stringflow.rta.Joypad.*;
+import static stringflow.rta.Joypad.B;
+import static stringflow.rta.Joypad.START;
 
 public class GenericEncounterChecker {
 	
@@ -29,6 +30,7 @@ public class GenericEncounterChecker {
 				int index = frame + second * 60;
 				if(initialSaves[index] == null) {
 					addIGTResult(igtmap, second, frame, true);
+					continue;
 				}
 				gb.loadState(initialSaves[index]);
 				GscAction firstAction = GscAction.fromString(actions[0]);
@@ -49,15 +51,26 @@ public class GenericEncounterChecker {
 		return igtmap;
 	}
 	
+	public static int rngBandCheck(Gb gb, byte initialSave[], String path, long params) {
+		GenericEncounterChecker.gb = gb;
+		GenericEncounterChecker.params = params;
+		String actions[] = path.split(" ");
+		gb.loadState(initialSave);
+		GscAction firstAction = GscAction.fromString(actions[0]);
+		if(firstAction != GscAction.START_B) {
+			gb.hold(firstAction.getJoypad());
+			gb.advanceTo("owplayerinput");
+		}
+		for(int j = 0; j < actions.length; j++) {
+			if(!execute(GscAction.fromString(actions[j]))) {
+				return -1;
+			}
+		}
+		return gb.getRandomState();
+	}
+	
 	private static void addIGTResult(EncounterIGTMap map, int second, int frame, boolean encounter) {
-		map.addResult(new IGTTimeStamp(0, 0, second, frame),
-				gb.read("wMap", 2), gb.read("wXCoord"),
-				gb.read("wYCoord"), gb.getRandomState(),
-				!encounter && (params & CREATE_SAVE_STATES) != 0 ? gb.saveState() : null,
-				(params & ADVANCE_TO_DVS) != 0 ? gb.getGame().getSpecies(gb.read("wEnemyMonSpecies")) : gb.getGame().getSpecies(encounter ? 1 : 0),
-				gb.read("wEnemyMonLevel"),
-				gb.read("wEnemyMonDVs"),
-				gb.read(gb.getGame().getAddress("wEnemyMonDVs").getAddress() + 1));
+		map.addResult(new IGTTimeStamp(0, 0, second, frame), gb.read("wMap", 2), gb.read("wXCoord"), gb.read("wYCoord"), gb.getRandomState(), !encounter && (params & CREATE_SAVE_STATES) != 0 ? gb.saveState() : null, (params & ADVANCE_TO_DVS) != 0 ? gb.getGame().getSpecies(gb.read("wEnemyMonSpecies")) : gb.getGame().getSpecies(encounter ? 1 : 0), gb.read("wEnemyMonLevel"), gb.read("wEnemyMonDVs"), gb.read(gb.getGame().getAddress("wEnemyMonDVs").getAddress() + 1));
 	}
 	
 	private static boolean execute(GscAction action) {

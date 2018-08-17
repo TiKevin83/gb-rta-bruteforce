@@ -79,11 +79,11 @@ public class Gb {
 		}
 	}
 	
-	public void createRenderContext(int size) {
+	public void createRenderContext(int scale) {
 		if(display != null) {
 			return;
 		}
-		display = new Display(VIDEO_BUFFER_WIDTH, VIDEO_BUFFER_HEIGHT, size, "My Display!");
+		display = new Display(VIDEO_BUFFER_WIDTH, VIDEO_BUFFER_HEIGHT, scale, "My Display!");
 	}
 	
 	public void loadRom(String rom, BaseGame game, int flags) {
@@ -139,6 +139,11 @@ public class Gb {
 		int cyclesPassed = samples.getInt(0);
 		cycleCount += cyclesPassed;
 		frameOverflow = (hitAddress == -1 ? 0 : frameOverflow + cyclesPassed);
+//		try {
+//			Thread.sleep(5);
+//		} catch(InterruptedException e) {
+//			e.printStackTrace();
+//		}
 		return hitAddress;
 	}
 	

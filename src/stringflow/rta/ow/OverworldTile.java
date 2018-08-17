@@ -110,7 +110,7 @@ public class OverworldTile {
     public void print() {
     	System.out.println(toString());
 		for(OverworldEdge edge : edgeList) {
-			System.out.println(edge.getAction().logStr());
+			System.out.println(edge.getAction().logStr() + " " + edge.getCost());
 		}
 	}
 }

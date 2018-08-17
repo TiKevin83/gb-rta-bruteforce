@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashSet;
 
 import static stringflow.rta.Joypad.*;
@@ -33,20 +34,27 @@ public class EncounterBot {
 	private static OverworldTile savePos;
 	private static HashSet<String> seenStates = new HashSet<>();
 	
+//	static {
+//		checkpoints = new Checkpoint[] {//new Checkpoint(0x1803, 0x26, 0x10, 0, 0, 59),
+//				new Checkpoint(0x1803, 0xE, 0x8, 6, 1, 58),};
+//	}
+	
+	
 	static {
-		checkpoints = new Checkpoint[] {//new Checkpoint(0x1803, 0x26, 0x10, 0, 0, 59),
-				new Checkpoint(0x1803, 0xE, 0x8, 3, 0, 60),};
+		checkpoints = new Checkpoint[] { new Checkpoint(0x1803, 0x15, 0x4, 3, 0, 58),
+				new Checkpoint(Map.ROUTE_30.getId(), 0xD, 0xD, 0, 0, 58),
+		};
 	}
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		game = new PokeGoldSilver();
 		
-		int waitTime = 1;
+		int waitTime = 2;
 		gb = new Gb();
 		gb.loadBios("roms/gbc_bios.bin");
 		gb.loadRom("roms/pokegold.gbc", game, LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
 		gb.setWarnOnZero(true);
-		//gb.createRenderContext(2);
+//		gb.createRenderContext(2);
 		
 		gb.hold(START);
 		gb.advanceTo(0x100);
@@ -63,35 +71,54 @@ public class EncounterBot {
 		byte[][] initialSaves = new byte[60][];
 		
 		for(int i = 0; i < 60; i++) {
-			sram[0x2057] = (byte) i;
-			writeChecksum(sram);
-			GSRUtils.encodeSAV(sram, saveState);
-			gb.loadState(saveState);
-			gb.hold(START);
-			gb.advanceTo("joypadCall");
-			gb.frameAdvance();
-			
-			gb.hold(START);
-			gb.advanceTo("joypadCall");
-			gb.frameAdvance();
-			
-			gb.hold(START | A);
-			gb.advanceTo("joypadCall");
-			gb.frameAdvance();
-			
-			gb.hold(START);
-			gb.advanceTo("joypadCall");
-			gb.hold(START);
-			gb.frameAdvance(waitTime);
-			gb.press(A);
-			initialSaves[i] = gb.saveState();
+			if(!new File("states/" + i + ".gqs").exists()) {
+				continue;
+			}
+			initialSaves[i] = IO.readBin("states/" + i + ".gqs");
 		}
+		
+//		for(int i = 0; i < 60; i++) {
+//			sram[0x2057] = (byte) i;
+//			writeChecksum(sram);
+//			GSRUtils.encodeSAV(sram, saveState);
+//			gb.loadState(saveState);
+//			gb.hold(START);
+//			gb.advanceTo("joypadCall");
+//			gb.frameAdvance();
+//
+//			gb.hold(START);
+//			gb.advanceTo("joypadCall");
+//			gb.frameAdvance();
+//
+//			gb.hold(START | A);
+//			gb.advanceTo("joypadCall");
+//			gb.frameAdvance();
+//
+//			gb.hold(START);
+//			gb.advanceTo("joypadCall");
+//			gb.hold(START);
+//			gb.frameAdvance(waitTime);
+//			gb.press(A);
+//			initialSaves[i] = gb.saveState();
+//		}
 		
 		foundManips = new PrintWriter(new File(game.getClass().getName() + "_foundManips.txt"));
 		partialManips = new PrintWriter(new File(game.getClass().getName() + "_partial_moon_paths.txt"));
 		
-		OverworldTile[][] owTiles1 = AStar.initTiles(Map.ROUTE_29, 17, 3, false, new MapDestination(Map.ROUTE_29, new Location(0xE, 0x8)));
+//		OverworldTile[][] owTiles1 = AStar.initTiles(Map.ROUTE_29, 17, 3, false, new MapDestination(Map.ROUTE_29, new Location(0xE, 0x8)));
+	
 		
+		OverworldTile[][] owTiles1 = AStar.initTiles(Map.ROUTE_29, 17, 3, false, new MapDestination(Map.ROUTE_29, new Location(0x00, 0x7)));
+		OverworldTile[][] owTiles2 = AStar.initTiles(Map.CHERRY_GROVE, 17, 3, false, new MapDestination(Map.CHERRY_GROVE, new Location(0x11, 0x0)));
+		OverworldTile[][] owTiles3 = AStar.initTiles(Map.ROUTE_30, 17, 3, false, new MapDestination(Map.ROUTE_30, new Location(0xD, 0xD)));
+		owTiles1[0x0][0x7].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, owTiles2[0x27][0x7]));
+		owTiles2[0x11][0x0].addEdge(new OverworldEdge(OverworldAction.UP, 0, 17, owTiles3[0x7][0x35]));
+
+		Collections.sort(owTiles1[0x0][0x7].getEdgeList());
+		Collections.sort(owTiles2[0x11][0x0].getEdgeList());
+		Collections.sort(owTiles3[0x7][0x34].getEdgeList());
+		
+		gb.loadState(initialSaves[0]);
 		OverworldTile savePos = owTiles1[gb.read("wXCoord")][gb.read("wYCoord")];
 		OverworldState owState = new OverworldState(savePos.toString() + ":", savePos, initialSaves, checkpoints[0], 1, 0, 0, true, 0, 0, gb.getRandomAdd(), gb.getRandomSub());
 		overworldSearch(owState);
