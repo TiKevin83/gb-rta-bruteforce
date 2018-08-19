@@ -1,5 +1,6 @@
 package stringflow.rta.gen2;
 
+import stringflow.rta.AspectTest;
 import stringflow.rta.InputDisplay;
 import stringflow.rta.encounterigt.EncounterIGTMap;
 import stringflow.rta.libgambatte.Gb;
@@ -19,7 +20,7 @@ public class EncounterIGT0Checker {
 	public static void main(String args[]) throws Exception {
 		game = new PokeGoldSilver();
 		
-		String path = "L L L L L L L L L L L L D D D D D D S_B L L L L L D";
+		String path = "L L L L L L L L L L L L D D D D D D S_B L L L L L";
 //		path += "L L L L L U L L L L L L L L L L L L L L L L L L L L U L L L L L L S_B L L U U L L L U U U U U U U U U U R R R R S_B R R U U U U U U U U U U U U U U U R U U U U U U U U U L L U U L U U U U U R U U U U";
 		int waitTime = 1;
 //		int menuAccount = 1;
@@ -28,8 +29,8 @@ public class EncounterIGT0Checker {
 		gb.loadBios("roms/gbc_bios.bin");
 		gb.loadRom("roms/pokegold.gbc", game, LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
 		gb.setWarnOnZero(true);
-//		gb.createRenderContext(2);
-//		gb.setOnDisplayUpdate(new InputDisplay());
+		gb.createRenderContext(2);
+		gb.setOnDisplayUpdate(new InputDisplay());
 		
 		gb.hold(START);
 		gb.advanceTo(0x100);

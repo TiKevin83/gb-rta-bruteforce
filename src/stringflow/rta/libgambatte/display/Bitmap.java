@@ -18,9 +18,6 @@ public class Bitmap {
 	}
 	
 	public Bitmap(String fileName) {
-		int width = 0;
-		int height = 0;
-		byte[] components = null;
 		BufferedImage image = IO.readImage(fileName);
 		width = image.getWidth();
 		height = image.getHeight();
@@ -33,10 +30,6 @@ public class Bitmap {
 			components[i * 4 + 2] = (byte)((pixels[i] >> 8) & 0xFF);
 			components[i * 4 + 3] = (byte)((pixels[i] >> 16) & 0xFF);
 		}
-		
-		this.width = width;
-		this.height = height;
-		this.components = components;
 	}
 	
 	public void clear(byte shade) {
@@ -60,8 +53,8 @@ public class Bitmap {
 	}
 	
 	public void copyNearest(Bitmap dest, int destX, int destY, float srcXFloat, float srcYFloat) {
-		int srcX = (int)(srcXFloat * (getWidth() - 1));
-		int srcY = (int)(srcYFloat * (getHeight() - 1));
+		int srcX = (int)(srcXFloat * (getWidth()));
+		int srcY = (int)(srcYFloat * (getHeight()));
 		int destIndex = (destX + destY * dest.getWidth()) * 4;
 		int srcIndex = (srcX + srcY * getWidth()) * 4;
 		dest.setComponent(destIndex, components[srcIndex]);
@@ -71,8 +64,8 @@ public class Bitmap {
 	}
 	
 	public byte getNearestComponent(float srcXFloat, float srcYFloat, int component) {
-		int srcX = (int)(srcXFloat * (getWidth() - 1));
-		int srcY = (int)(srcYFloat * (getHeight() - 1));
+		int srcX = (int)(srcXFloat * (getWidth()));
+		int srcY = (int)(srcYFloat * (getHeight()));
 		int srcIndex = (srcX + srcY * getWidth()) * 4;
 		return components[srcIndex + component];
 	}

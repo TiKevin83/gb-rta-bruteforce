@@ -111,9 +111,9 @@ public class RenderContext extends Bitmap {
 		int destIndex = (startX + startY * getWidth()) * 4;
 		int destStepY = (getWidth() - (endX - startX)) * 4;
 		float srcY = texStartY;
-		float srcIndexFloatStep = (srcStepX * (float)(bitmap.getWidth() - 1));
+		float srcIndexFloatStep = (srcStepX * (float)(bitmap.getWidth()));
 		for(int j = startY; j < endY; j++) {
-			float srcIndexFloat = ((texStartX * (bitmap.getWidth() - 1)) + (int)(srcY * (bitmap.getHeight() - 1)) * bitmap.getWidth());
+			float srcIndexFloat = ((texStartX * (bitmap.getWidth())) + (int)(srcY * (bitmap.getHeight())) * bitmap.getWidth());
 			for(int i = startX; i < endX; i++) {
 				int srcIndex = (int)(srcIndexFloat) * 4;
 				int a = bitmap.getComponent(srcIndex + 0) & 0xFF;
@@ -143,11 +143,11 @@ public class RenderContext extends Bitmap {
 		int destIndex = (startX + startY * getWidth()) * 4;
 		int destYInc = (getWidth() - (endX - startX)) * 4;
 		float srcY = texStartY;
-		float srcIndexFloatStep1 = (srcStepX * (float)(source.getWidth() - 1));
-		float srcIndexFloatStep2 = (srcStepX * (float)(bitmap.getWidth() - 1));
+		float srcIndexFloatStep1 = (srcStepX * (float)(source.getWidth()));
+		float srcIndexFloatStep2 = (srcStepX * (float)(bitmap.getWidth()));
 		for(int j = startY; j < endY; j++) {
-			float srcIndexFloat1 = ((texStartX * (source.getWidth() - 1)) + (int)(srcY * (source.getHeight() - 1)) * source.getWidth());
-			float srcIndexFloat2 = ((texStartX * (bitmap.getWidth() - 1)) + (int)(srcY * (bitmap.getHeight() - 1)) * bitmap.getWidth());
+			float srcIndexFloat1 = ((texStartX * (source.getWidth())) + (int)(srcY * (source.getHeight())) * source.getWidth());
+			float srcIndexFloat2 = ((texStartX * (bitmap.getWidth())) + (int)(srcY * (bitmap.getHeight())) * bitmap.getWidth());
 			for(int i = startX; i < endX; i++) {
 				int srcIndex1 = (int)(srcIndexFloat1) * 4;
 				int srcIndex2 = (int)(srcIndexFloat2) * 4;
