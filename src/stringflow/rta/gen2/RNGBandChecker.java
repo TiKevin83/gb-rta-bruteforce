@@ -19,7 +19,7 @@ public class RNGBandChecker {
 	public static void main(String args[]) throws Exception {
 		game = new PokeGoldSilver();
 		
-		int waitTime = 2;
+		int waitTime = 3;
 		gb = new Gb();
 		gb.loadBios("roms/gbc_bios.bin");
 		gb.loadRom("roms/pokegold.gbc", game, LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
@@ -32,7 +32,7 @@ public class RNGBandChecker {
 		byte sram[] = new byte[0x8000];
 		
 		GSRUtils.decodeSAV(saveState, sram);
-		GSRUtils.writeRTC(saveState, 0x9B2F, 300);
+		GSRUtils.writeRTC(saveState, 0x9B2F, 570);
 		sram[0x2044] = (byte)0x00;
 		sram[0x2045] = (byte)0x0A;
 		sram[0x2046] = (byte)0x39;

@@ -148,6 +148,11 @@ public class Gb {
 		int cyclesPassed = samples.getInt(0);
 		cycleCount += cyclesPassed;
 		frameOverflow = (hitAddress == -1 ? 0 : frameOverflow + cyclesPassed);
+//		try {
+//			Thread.sleep(5);
+//		} catch(InterruptedException e) {
+//			e.printStackTrace();
+//		}
 		return hitAddress;
 	}
 	

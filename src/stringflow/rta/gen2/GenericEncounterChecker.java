@@ -1,13 +1,15 @@
 package stringflow.rta.gen2;
 
 import stringflow.rta.Address;
+import stringflow.rta.Joypad;
 import stringflow.rta.encounterigt.EncounterIGTMap;
 import stringflow.rta.libgambatte.Gb;
 import stringflow.rta.util.IGTTimeStamp;
 import stringflow.rta.util.IO;
 
-import static stringflow.rta.Joypad.B;
-import static stringflow.rta.Joypad.START;
+import javax.imageio.ImageIO;
+
+import static stringflow.rta.Joypad.*;
 
 public class GenericEncounterChecker {
 	
@@ -24,8 +26,9 @@ public class GenericEncounterChecker {
 		GenericEncounterChecker.params = params;
 		EncounterIGTMap igtmap = new EncounterIGTMap();
 		String actions[] = path.split(" ");
+		int maxSecond = (int) Math.ceil(initialSaves.length / 60);
 		outer:
-		for(int second = 0; second < 1; second++) {
+		for(int second = 0; second < maxSecond; second++) {
 			for(int frame = 0; frame < 60; frame++) {
 				int index = frame + second * 60;
 				if(initialSaves[index] == null) {
