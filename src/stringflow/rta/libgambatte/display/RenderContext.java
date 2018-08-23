@@ -30,12 +30,14 @@ public class RenderContext extends Bitmap {
 	}
 	
 	public void drawString(String text, float x, float y, float size, byte b, byte g, byte r) {
+		drawString(text, x, y, size, size, b, g, r);
+	}
+	
+	public void drawString(String text, float x, float y, float sizeX, float sizeY, byte b, byte g, byte r) {
 		float spacingFactor = font.getAspectRatio();
 		fontColor.drawPixel(0, 0, (byte)0x00, b, g, r);
 		float currentPosX = x;
 		float currentPosY = y;
-		float sizeX = size;
-		float sizeY = size;
 		for(int i = 0; i < text.length(); i++) {
 			char current = text.charAt(i);
 			int imgX = current & 0x0F;

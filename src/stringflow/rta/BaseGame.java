@@ -10,14 +10,16 @@ public abstract class BaseGame {
 	protected NamedList<Strat> stratList;
 	protected NamedList<Species> speciesList;
 	private String igtPrefix;
+	private int hJoypad;
 	private int hRandomAdd;
 	private int hRandomSub;
 	
-	public BaseGame(String symFilePath, String speciesMapPath, String igtPrefix, int hRandomAdd, int hRandomSub) {
+	public BaseGame(String symFilePath, String speciesMapPath, String igtPrefix, int hJoypad, int hRandomAdd, int hRandomSub) {
 		this.addressList = new NamedList<>();
 		this.stratList = new NamedList<>();
 		this.speciesList = new NamedList<>();
 		this.igtPrefix = igtPrefix;
+		this.hJoypad = hJoypad;
 		this.hRandomAdd = hRandomAdd;
 		this.hRandomSub = hRandomSub;
 		if(!symFilePath.trim().isEmpty()) {
@@ -30,7 +32,7 @@ public abstract class BaseGame {
 					if(curBank == 0 && name.toLowerCase().startsWith("sprite")) {
 						name = "w" + name;
 					}
-					addressList.add(new Address(name.toLowerCase(), curBank > 1 ? curBank * 0x4000 + (curBankOffset - 0x4000) : curBankOffset));
+					addressList.add(new Address(name.toLowerCase(), (curBank << 16) | curBankOffset));
 				}
 			});
 		}
@@ -46,7 +48,7 @@ public abstract class BaseGame {
 		}
 	}
 	
-	public abstract void setCsum(byte target[]);
+	public abstract void writeChecksum(byte target[]);
 	
 	public Address getAddress(int addressIn) {
 		for(Address address : addressList) {
@@ -80,6 +82,10 @@ public abstract class BaseGame {
 	
 	public Strat getStrat(String nameIn) {
 		return stratList.get(nameIn);
+	}
+	
+	public int getJoypadAddress() {
+		return hJoypad;
 	}
 	
 	public int getRandomAdd() {

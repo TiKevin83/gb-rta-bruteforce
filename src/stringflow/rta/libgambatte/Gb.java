@@ -125,13 +125,20 @@ public class Gb {
 	}
 	
 	public void hold(int joypad) {
-		currentJoypad = joypad;
+		setJoypad(joypad);
 	}
 	
 	public void press(int joypad) {
+		setJoypad(joypad);
+ 		frameAdvance();
+		setJoypad(0);
+	}
+	
+	private void setJoypad(int joypad) {
+		if(game.getJoypadAddress() != -1 && read(0xFF88) != 0x3) {
+			write(game.getJoypadAddress(), joypad);
+		}
 		currentJoypad = joypad;
-		frameAdvance();
-		currentJoypad = 0;
 	}
 	
 	public int frameAdvance() {
@@ -148,11 +155,6 @@ public class Gb {
 		int cyclesPassed = samples.getInt(0);
 		cycleCount += cyclesPassed;
 		frameOverflow = (hitAddress == -1 ? 0 : frameOverflow + cyclesPassed);
-//		try {
-//			Thread.sleep(5);
-//		} catch(InterruptedException e) {
-//			e.printStackTrace();
-//		}
 		return hitAddress;
 	}
 	
@@ -162,15 +164,15 @@ public class Gb {
 		}
 	}
 	
-	public Address advanceTo(Object... addresses) {
+	public Address runUntil(Object... addresses) {
 		int convertedAddresses[] = new int[addresses.length];
 		for(int i = 0; i < addresses.length; i++) {
 			convertedAddresses[i] = convertAddress(addresses[i]).getAddress();
 		}
-		return advanceTo(convertedAddresses);
+		return runUntil(convertedAddresses);
 	}
 	
-	private Address advanceTo(int... addresses) {
+	private Address runUntil(int... addresses) {
 		addressBuffer.clear();
 		addressBuffer.write(0, addresses, 0, addresses.length);
 		int hitAddress;
@@ -192,6 +194,10 @@ public class Gb {
 	}
 	
 	public void loadState(byte buffer[]) {
+		if(saveStateSize != buffer.length) {
+			saveStateSize = buffer.length;
+			saveStateBuffer = new Memory(buffer.length);
+		}
 		saveStateBuffer.write(0, buffer, 0, buffer.length);
 		boolean success = lib.gambatte_loadstate(gbHandle, saveStateBuffer, saveStateSize);
 		if(!success) {

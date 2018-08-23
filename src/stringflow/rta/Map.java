@@ -71,6 +71,8 @@ public class Map {
 	public static Map ROUTE_29 = new Map(0x1803, 30, 698000, 100000, 25, "./maps/ROUTE_29.bin");
 	public static Map CHERRY_GROVE = new Map(0x1A03, 20, 598000, 100000, 0, "./maps/CHERRYGROVE.bin");
 	public static Map ROUTE_30 = new Map(0x1A01, 10, 1900, 900000, 25, "./maps/ROUTE_30.bin");
+	public static Map UNION_CAVE = new Map(0x031D, 10, 45678900, 960000, 15, "./maps/UNION_CAVE.bin");
+	public static Map DARK_CAVE = new Map(0x0346, 20, 4354545, 3456666, 15, "./maps/DARK_CAVE.bin");
 	
 	static {
 		PALLET_TOWN.setConnections(ROUTE_1, null, ROUTE_21, null);
@@ -200,7 +202,6 @@ public class Map {
 			if(id == 0x1A01) {
 				//tiles[0xE][0x16].setCanMoveUp(false);
 				//tiles[0xF][0x16].setCanMoveUp(false);
-				System.out.println(tiles[0xC][0x0F].canMoveUp());
 			}
 			if(id == 60) {
 				tiles[6][5].setCanMoveLeft(false);

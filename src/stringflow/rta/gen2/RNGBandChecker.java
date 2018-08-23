@@ -27,7 +27,7 @@ public class RNGBandChecker {
 //		gb.createRenderContext(2);
 		
 		gb.hold(START);
-		gb.advanceTo(0x100);
+		gb.runUntil(0x100);
 		byte saveState[] = gb.saveState();
 		byte sram[] = new byte[0x8000];
 		
@@ -46,34 +46,37 @@ public class RNGBandChecker {
 			GSRUtils.encodeSAV(sram, saveState);
 			gb.loadState(saveState);
 			gb.hold(START);
-			gb.advanceTo("joypadCall");
+			gb.runUntil("joypadCall");
 			gb.frameAdvance();
 			
 			gb.hold(START);
-			gb.advanceTo("joypadCall");
+			gb.runUntil("joypadCall");
 			gb.frameAdvance();
 			
 			gb.hold(START | A);
-			gb.advanceTo("joypadCall");
+			gb.runUntil("joypadCall");
 			gb.frameAdvance();
 			
 			gb.hold(START);
-			gb.advanceTo("joypadCall");
+			gb.runUntil("joypadCall");
 			gb.hold(START);
 			gb.frameAdvance(waitTime);
 			gb.press(A);
 			initialSaves[i] = gb.saveState();
 		}
-		
 		int errorMargin = 5;
 		TextFile file = IO.readText("4.txt");
 		pathLoop:
 		for(String line : file.getContentAsList()) {
+//			if(!line.endsWith("R R R U R R U U U U L L L L L L L L L L L L L U L L U L L L L D D D L L L D, cost: 3, owFrames: 1278 - 58/60")) {
+//				continue;
+//			}
 			String path = line.substring(line.indexOf(":") + 2, line.indexOf(", cost"));
+			path += " L L L L L U L L ";
 			HashMap<Integer, Integer> rngBandCounter = new HashMap<Integer, Integer>();
 			igtLoop:
 			for(int i = 0; i < 60; i++) {
-				int result = GenericEncounterChecker.rngBandCheck(gb, initialSaves[i], path, 0);
+				int result = GscIGTChecker.rngBandCheck(gb, initialSaves[i], path, 0);
 				if(result == -1) {
 					continue;
 				}

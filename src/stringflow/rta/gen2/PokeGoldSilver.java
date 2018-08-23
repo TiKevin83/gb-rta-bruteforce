@@ -23,7 +23,12 @@ public class PokeGoldSilver extends Gen2Game {
 		addressList.add(new Address("wGameTimeFrames", 0xD1EF));
 	}
 	
-	
-	public void setCsum(byte target[]) {
+	public void writeChecksum(byte sram[]) {
+		int checksum = 0;
+		for(int i = 0x2009; i < 0x2D69; i++) {
+			checksum += (sram[i] & 0xFF);
+		}
+		sram[0x2D69] = (byte)((checksum >> 0) & 0xFF);
+		sram[0x2D6A] = (byte)((checksum >> 8) & 0xFF);
 	}
 }

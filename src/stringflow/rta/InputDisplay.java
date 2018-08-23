@@ -40,7 +40,7 @@ public class InputDisplay implements IDisplayUpdateCallback {
 			dpad = dpadDown;
 		}
 		
-		target.drawImage(dpad, baseXStart - 0.35f, baseYStart, baseXEnd - 0.35f + 0.08f, baseYEnd + 0.07f, RenderContext.TRANSPARENCY_FULL);
+		target.drawImage(dpad, baseXStart - 0.35f, baseYStart, baseXEnd - 0.35f + 0.08f, baseYEnd + 0.082f, RenderContext.TRANSPARENCY_FULL);
 		target.drawImage((gb.getCurrentJoypad() & START) != 0 ? buttonSmallTrue : buttonSmallFalse, baseXStart - 0.075f, baseYStart + 0.2f, baseXEnd- 0.075f, baseYEnd + 0.2f, RenderContext.TRANSPARENCY_FULL);
 		target.drawImage((gb.getCurrentJoypad() & SELECT) != 0 ? buttonSmallTrue : buttonSmallFalse, baseXStart - 0.175f, baseYStart + 0.2f, baseXEnd- 0.175f, baseYEnd + 0.2f, RenderContext.TRANSPARENCY_FULL);
 //		target.drawString(gb.getCurrentJoypad() + "", -1f, 0.8f, 50.0f / 256.0f, (byte)0x00, (byte)0x00, (byte)0xFF);

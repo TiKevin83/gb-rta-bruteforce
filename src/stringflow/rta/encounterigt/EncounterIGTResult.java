@@ -24,8 +24,9 @@ public class EncounterIGTResult {
 	private boolean selectYoloball;
 	private boolean redbarYoloball;
 	private boolean redbarSelectYoloball;
+	private boolean hitSpinner;
 	
-	public EncounterIGTResult(IGTTimeStamp igt, int map, int x, int y, int rng, String npcTimers, byte save[], Species species, Gender gender, int level, int dvs, boolean yoloball, boolean selectYoloball, boolean redbarYoloball, boolean redbarSelectYoloball) {
+	public EncounterIGTResult(IGTTimeStamp igt, int map, int x, int y, int rng, String npcTimers, byte save[], Species species, Gender gender, int level, int dvs, boolean yoloball, boolean selectYoloball, boolean redbarYoloball, boolean redbarSelectYoloball, boolean hitSpinner) {
 		this.igt = igt;
 		this.map = map;
 		this.x = x;
@@ -41,6 +42,7 @@ public class EncounterIGTResult {
 		this.selectYoloball = selectYoloball;
 		this.redbarYoloball = redbarYoloball;
 		this.redbarSelectYoloball = redbarSelectYoloball;
+		this.hitSpinner = hitSpinner;
 	}
 	
 	public IGTTimeStamp getIgt() {
@@ -113,5 +115,9 @@ public class EncounterIGTResult {
 	
 	public Gender getGender() {
 		return gender;
+	}
+	
+	public boolean getHitSpinner() {
+		return hitSpinner;
 	}
 }
