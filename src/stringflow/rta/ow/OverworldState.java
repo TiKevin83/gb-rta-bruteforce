@@ -1,7 +1,7 @@
 package stringflow.rta.ow;
 
 import stringflow.rta.Checkpoint;
-import stringflow.rta.StateBuffer;
+import stringflow.rta.IGTState;
 
 import java.util.ArrayList;
 
@@ -9,7 +9,7 @@ public class OverworldState {
 	
 	private String str;
 	private OverworldTile pos;
-	private ArrayList<StateBuffer> states;
+	private ArrayList<IGTState> states;
 	private Checkpoint currentTarget;
 	private int numStartPresses;
 	private int numAPresses;
@@ -20,7 +20,7 @@ public class OverworldState {
 	private int hra;
 	private int hrs;
 	
-	public OverworldState(String str, OverworldTile pos, ArrayList<StateBuffer> states, Checkpoint currentTarget, int aPress, int numStartPresses, int numAPresses, boolean startPress, int wastedFrames, int overworldFrames) {
+	public OverworldState(String str, OverworldTile pos, ArrayList<IGTState> states, Checkpoint currentTarget, int aPress, int numStartPresses, int numAPresses, boolean startPress, int wastedFrames, int overworldFrames) {
 		this.str = str;
 		this.pos = pos;
 		this.aPress = aPress;
@@ -35,7 +35,7 @@ public class OverworldState {
 		this.hrs = -1;
 	}
 	
-	public OverworldState(String str, OverworldTile pos, ArrayList<StateBuffer> states, Checkpoint currentTarget, int aPress, int numStartPresses, int numAPresses, boolean startPress, int wastedFrames, int overworldFrames, int hra, int hrs) {
+	public OverworldState(String str, OverworldTile pos, ArrayList<IGTState> states, Checkpoint currentTarget, int aPress, int numStartPresses, int numAPresses, boolean startPress, int wastedFrames, int overworldFrames, int hra, int hrs) {
 		this.str = str;
 		this.pos = pos;
 		this.aPress = aPress;
@@ -82,7 +82,7 @@ public class OverworldState {
 		return pos;
 	}
 	
-	public ArrayList<StateBuffer> getStates() {
+	public ArrayList<IGTState> getStates() {
 		return states;
 	}
 	

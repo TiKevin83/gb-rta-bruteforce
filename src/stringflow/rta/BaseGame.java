@@ -24,7 +24,7 @@ public abstract class BaseGame {
 		this.hRandomSub = hRandomSub;
 		if(!symFilePath.trim().isEmpty()) {
 			TextFile symFile = IO.readText(symFilePath);
-			symFile.visitAll((line, lineNumber) -> {
+			symFile.forEach(line -> {
 				if(!(line.isEmpty() || line.startsWith(";"))) {
 					int curBank = Integer.decode("0x" + line.substring(0, line.indexOf(":")));
 					int curBankOffset = Integer.decode("0x" + line.substring(line.indexOf(":") + 1, line.indexOf(" ")));
@@ -38,7 +38,7 @@ public abstract class BaseGame {
 		}
 		if(!speciesMapPath.trim().isEmpty()) {
 			TextFile speciesMap = IO.readText(speciesMapPath);
-			speciesMap.visitAll((line, lineNumber) -> {
+			speciesMap.forEach(line -> {
 				String splitArray[] = line.split(" ");
 				int indexNumber = Integer.decode(splitArray[0]);
 				String name = splitArray[1];

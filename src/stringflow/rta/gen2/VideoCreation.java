@@ -2,7 +2,7 @@ package stringflow.rta.gen2;
 
 import stringflow.rta.InputDisplay;
 import stringflow.rta.PathDisplay;
-import stringflow.rta.StateBuffer;
+import stringflow.rta.IGTState;
 import stringflow.rta.libgambatte.Gb;
 import stringflow.rta.libgambatte.LoadFlags;
 import stringflow.rta.util.GSRUtils;
@@ -50,7 +50,7 @@ public class VideoCreation {
 		for(String path : paths) {
 			waitTime++;
 			pathDisplay.setPathNumber(waitTime);
-			ArrayList<StateBuffer> initialStates = new ArrayList<>();
+			ArrayList<IGTState> initialStates = new ArrayList<>();
 			for(int j = 0; j < 1; j++) {
 				for(int i = 7; i < 8; i++) {
 					sram[0x2056] = (byte)j;
@@ -75,7 +75,7 @@ public class VideoCreation {
 					gb.hold(START);
 					gb.frameAdvance(waitTime);
 					gb.press(A);
-					initialStates.add(new StateBuffer(new IGTTimeStamp(0, 0, j, i), gb.saveState()));
+					initialStates.add(new IGTState(new IGTTimeStamp(0, 0, j, i), gb.saveState()));
 					GscIGTChecker.checkIgt0(gb, initialStates, path, GscIGTChecker.ADVANCE_TO_DVS | GscIGTChecker.CREATE_SAVE_STATES);
 				}
 			}

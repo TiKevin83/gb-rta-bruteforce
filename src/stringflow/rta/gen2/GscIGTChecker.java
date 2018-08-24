@@ -2,7 +2,7 @@ package stringflow.rta.gen2;
 
 import stringflow.rta.Address;
 import stringflow.rta.Failure;
-import stringflow.rta.StateBuffer;
+import stringflow.rta.IGTState;
 import stringflow.rta.encounterigt.EncounterIGTMap;
 import stringflow.rta.libgambatte.Gb;
 import stringflow.rta.util.IGTTimeStamp;
@@ -22,13 +22,13 @@ public class GscIGTChecker {
 	private static long flags;
 	
 	//TODO: Make this also work for Crystal
-	public static EncounterIGTMap checkIgt0(Gb gb, ArrayList<StateBuffer> initialSaves, String path, long flags) {
+	public static EncounterIGTMap checkIgt0(Gb gb, ArrayList<IGTState> initialSaves, String path, long flags) {
 		GscIGTChecker.gb = gb;
 		GscIGTChecker.flags = flags;
 		EncounterIGTMap igtmap = new EncounterIGTMap();
 		String actions[] = path.split(" ");
 		outer:
-		for(StateBuffer state : initialSaves) {
+		for(IGTState state : initialSaves) {
 			IGTTimeStamp igt = state.getIgt();
 			byte data[] = state.getData();
 			if(state == null) {

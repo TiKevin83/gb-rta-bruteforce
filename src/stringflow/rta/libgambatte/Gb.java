@@ -53,6 +53,7 @@ public class Gb {
 	private Memory saveStateBuffer;
 	private InputCallback inputCallback;
 	private boolean warnOnZero;
+	private boolean injectInputs;
 	
 	public Gb() {
 		lib = Libgambatte.INSTANCE;
@@ -62,6 +63,7 @@ public class Gb {
 		cycleCount = 0;
 		currentJoypad = 0;
 		warnOnZero = false;
+		injectInputs = true;
 		addressBuffer = new Memory(ADDRESS_BUFFER_SIZE);
 		videoBuffer = new Memory(VIDEO_BUFFER_SIZE * 4);
 		audioBuffer = new Memory(AUDIO_BUFFER_SIZE * 4);
@@ -135,7 +137,7 @@ public class Gb {
 	}
 	
 	private void setJoypad(int joypad) {
-		if(game.getJoypadAddress() != -1 && read(0xFF88) != 0x3) {
+		if(game.getJoypadAddress() != -1 && read(0xFF88) != 0x3 && injectInputs) {
 			write(game.getJoypadAddress(), joypad);
 		}
 		currentJoypad = joypad;
@@ -260,6 +262,10 @@ public class Gb {
 	
 	public int getCurrentJoypad() {
 		return currentJoypad;
+	}
+	
+	public void setInjectInputs(boolean injectInputs) {
+		this.injectInputs = injectInputs;
 	}
 	
 	private Address convertAddress(Object address) {

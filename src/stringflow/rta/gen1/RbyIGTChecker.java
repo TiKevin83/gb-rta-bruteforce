@@ -5,6 +5,7 @@ import stringflow.rta.encounterigt.EncounterIGTMap;
 import stringflow.rta.libgambatte.Gb;
 import stringflow.rta.ow.OverworldAction;
 import stringflow.rta.util.IGTTimeStamp;
+import stringflow.rta.util.IO;
 import stringflow.rta.util.StringUtils;
 
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class RbyIGTChecker {
 	private static long params;
 	private static boolean yoloballs[];
 	
-	public static EncounterIGTMap checkIGT0(Gb gb, ArrayList<StateBuffer> initalStates, String path, long params) {
+	public static EncounterIGTMap checkIGT0(Gb gb, ArrayList<IGTState> initalStates, String path, long params) {
 		RbyIGTChecker.gb = gb;
 		RbyIGTChecker.params = params;
 		ArrayList<Itemball> itemballs = new ArrayList<>();
@@ -59,10 +60,10 @@ public class RbyIGTChecker {
 		ArrayList<Integer>[] npcTimers = new ArrayList[NUM_NPCS];
 		EncounterIGTMap igtmap = new EncounterIGTMap();
 		String actions[] = path.split(" ");
-		for(StateBuffer state : initalStates) {
+		for(IGTState state : initalStates) {
 			IGTTimeStamp igt = state.getIgt();
 			byte data[] = state.getData();
-			if(state == null) {
+			if(state.getData() == null) {
 //				addIGTResult(igtmap, igt, true, false);
 				continue;
 			}
@@ -86,7 +87,7 @@ public class RbyIGTChecker {
 					updateNPCTimers(gb, npcTimers);
 				}
 			}
-			igtmap.addResult(gb, igt, npcTimers, (params & CREATE_SAVE_STATES) != 0 ? RbyIGTChecker.gb.saveState() : null, yoloballs);
+			igtmap.addResult(gb, igt, npcTimers, (params & CREATE_SAVE_STATES) != 0 && gb.read("wEnemyMonSpecies") == 0 ? RbyIGTChecker.gb.saveState() : null, yoloballs);
 		}
 		return igtmap;
 	}
@@ -140,6 +141,7 @@ public class RbyIGTChecker {
 					int hra = gb.getRandomAdd();
 					if(hra < gb.read("wGrassRate")) {
 						gb.frameAdvance(3);
+						IO.writeBin("vohiyostate.gqs", gb.saveState());
 						if((params & 0xFF) == gb.read("wEnemyMonSpecies")) {
 							simulateYoloball();
 						}

@@ -9,19 +9,18 @@ import stringflow.rta.util.IGTTimeStamp;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class EncounterIGTMap {
-	
-	private ArrayList<EncounterIGTResult> resultList;
+public class EncounterIGTMap extends ArrayList<EncounterIGTResult> {
 	
 	public EncounterIGTMap() {
-		resultList = new ArrayList<>();
+		super();
 	}
 	
 	public EncounterIGTMap(Collection<EncounterIGTResult> collection) {
-		resultList = new ArrayList<>(collection);
+		super(collection);
 	}
 	
 	public void addResult(Gb gb, IGTTimeStamp timeStamp, ArrayList<Integer>[] npcTimers, byte save[], boolean yoloballs[]) {
@@ -42,7 +41,7 @@ public class EncounterIGTMap {
 			}
 		}
 		int hRandom = (gb.getRandomAdd() << 8) | gb.getRandomSub();
-		resultList.add(new EncounterIGTResult(timeStamp, gb.read("wCurMap"), gb.read("wXCoord"), gb.read("wYCoord"), hRandom, npcTimersString, save, gb.getGame().getSpecies(gb.read("wEnemyMonSpecies")), Gender.GENDERLESS, gb.read("wEnemyMonLevel"), gb.read("wEnemyMonDVs", 2), yoloballs[0], yoloballs[1], yoloballs[2], yoloballs[3], false));
+		add(new EncounterIGTResult(timeStamp, gb.read("wCurMap"), gb.read("wXCoord"), gb.read("wYCoord"), hRandom, npcTimersString, save, gb.getGame().getSpecies(gb.read("wEnemyMonSpecies")), Gender.GENDERLESS, gb.read("wEnemyMonLevel"), gb.read("wEnemyMonDVs", 2), yoloballs[0], yoloballs[1], yoloballs[2], yoloballs[3], false));
 	}
 	
 	// gen 2 constructor
@@ -59,15 +58,11 @@ public class EncounterIGTMap {
 			gender = Gender.MALE;
 		else
 			gender = Gender.FEMALE;
-		resultList.add(new EncounterIGTResult(igt, map, x, y, rng, "", save, species, gender, level, (dvUpper << 8) | dvLower, false, false, false, false, hitSpinner));
-	}
-	
-	public void addResult(EncounterIGTResult result) {
-		resultList.add(result);
+		add(new EncounterIGTResult(igt, map, x, y, rng, "", save, species, gender, level, (dvUpper << 8) | dvLower, false, false, false, false, hitSpinner));
 	}
 	
 	public void print(PrintStream target, boolean writeNpcTimers, boolean writeYoloballs) {
-		visitAll((result) -> {
+		forEach(result -> {
 			int second = result.getIgt().getSeconds();
 			int frame = result.getIgt().getFrames();
 			if(result.getSpecies() == 0) {
@@ -84,24 +79,10 @@ public class EncounterIGTMap {
 	}
 	
 	public EncounterIGTMap filter(Predicate<EncounterIGTResult> visitor) {
-		return new EncounterIGTMap(resultList.stream().filter(visitor).collect(Collectors.toList()));
+		return new EncounterIGTMap(stream().filter(visitor).collect(Collectors.toList()));
 	}
 	
 	public int numResultsWithSaves() {
 		return filter(result -> result.getSave() != null).size();
-	}
-	
-	public int size() {
-		return resultList.size();
-	}
-	
-	public EncounterIGTResult getResult(int index) {
-		return resultList.get(index);
-	}
-	
-	public void visitAll(IEncounterIGTVisitor visitor) {
-		for(EncounterIGTResult result : resultList) {
-			visitor.onVisit(result);
-		}
 	}
 }

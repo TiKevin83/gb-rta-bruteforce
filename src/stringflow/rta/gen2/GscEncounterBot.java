@@ -76,13 +76,13 @@ public class GscEncounterBot {
 		sram[0x2046] = (byte)0x39;
 		sram[0x2047] = (byte)0x00;
 		
-		ArrayList<StateBuffer> initialStates = new ArrayList<StateBuffer>();
+		ArrayList<IGTState> initialStates = new ArrayList<IGTState>();
 //
 		for(int i = 0; i < 60; i++) {
 			if(!new File("states/" + i + ".gqs").exists()) {
 				continue;
 			}
-			initialStates.add(new StateBuffer(new IGTTimeStamp(0, 0, 0, i), IO.readBin("states/" + i + ".gqs")));
+			initialStates.add(new IGTState(new IGTTimeStamp(0, 0, 0, i), IO.readBin("states/" + i + ".gqs")));
 		}
 
 //		for(int i = 0; i < 60; i++) {
@@ -211,9 +211,9 @@ public class GscEncounterBot {
 			OverworldState newState;
 			int owFrames = ow.getOverworldFrames() + edge.getFrames();
 			EncounterIGTMap result = GscIGTChecker.checkIgt0(gb, ow.getStates(), edgeAction.logStr(), GscIGTChecker.CREATE_SAVE_STATES);
-			ArrayList<StateBuffer> newStates = new ArrayList<>();
+			ArrayList<IGTState> newStates = new ArrayList<>();
 			for(int i = 0; i < 60; i++) {
-				newStates.add(new StateBuffer(new IGTTimeStamp(0, 0, 0, i), result.getResult(i).getSave()));
+				newStates.add(new IGTState(new IGTTimeStamp(0, 0, 0, i), result.get(i).getSave()));
 			}
 			int igt0 = result.filter(igt -> igt.getSpecies() == 0).size();
 			partialManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames) + " - " + igt0 + "/60 ");

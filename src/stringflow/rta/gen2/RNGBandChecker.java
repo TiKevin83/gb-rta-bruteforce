@@ -67,7 +67,7 @@ public class RNGBandChecker {
 		int errorMargin = 5;
 		TextFile file = IO.readText("4.txt");
 		pathLoop:
-		for(String line : file.getContentAsList()) {
+		for(String line : file) {
 //			if(!line.endsWith("R R R U R R U U U U L L L L L L L L L L L L L U L L U L L L L D D D L L L D, cost: 3, owFrames: 1278 - 58/60")) {
 //				continue;
 //			}

@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 public class IO {
 	
 	public static TextFile readText(String path) {
-		return new TextFile(path, "r");
+		return new TextFile(path);
 	}
 	
 	public static byte[] readBin(String path) {

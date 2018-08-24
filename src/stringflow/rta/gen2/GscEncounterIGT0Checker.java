@@ -1,6 +1,6 @@
 package stringflow.rta.gen2;
 
-import stringflow.rta.StateBuffer;
+import stringflow.rta.IGTState;
 import stringflow.rta.encounterigt.EncounterIGTMap;
 import stringflow.rta.libgambatte.Gb;
 import stringflow.rta.libgambatte.LoadFlags;
@@ -44,7 +44,7 @@ public class GscEncounterIGT0Checker {
 		sram[0x2047] = (byte)0x00;
 		sram[0x2825] = (byte)(sram[0x2825] + 0x1);
 		
-		ArrayList<StateBuffer> initialStates = new ArrayList<>();
+		ArrayList<IGTState> initialStates = new ArrayList<>();
 		for(int j = 0; j < 1; j++) {
 			for(int i = 7; i < 8; i++) {
 				sram[0x2056] = (byte)j;
@@ -69,7 +69,7 @@ public class GscEncounterIGT0Checker {
 				gb.hold(START);
 				gb.frameAdvance(waitTime);
 				gb.press(A);
-				initialStates.add(new StateBuffer(new IGTTimeStamp(0, 0, j, i), gb.saveState()));
+				initialStates.add(new IGTState(new IGTTimeStamp(0, 0, j, i), gb.saveState()));
 			}
 		}
 		System.out.println("saves done");
