@@ -19,7 +19,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class RbyMoonBot {
+public class ParasFinder {
 	
 	private static final String gameName;
 	private static final Checkpoint checkpoints[];
@@ -35,15 +35,19 @@ public class RbyMoonBot {
 	
 	static {
 		gameName = "yellow";
-		flags = RbyIGTChecker.MONITOR_NPC_TIMERS | RbyIGTChecker.CREATE_SAVE_STATES;
-		checkpoints = new Checkpoint[] {new Checkpoint(59, 6, 6, 6, 0, 58), };
+		flags = RbyIGTChecker.MONITOR_NPC_TIMERS | RbyIGTChecker.CREATE_SAVE_STATES | RbyIGTChecker.YOLOBALL | 109;
+		checkpoints = new Checkpoint[] {new Checkpoint(61, 10, 16,  34 + 4, 0, 1), };
+		ignoreFrames.add(2);
+		ignoreFrames.add(3);
+		ignoreFrames.add(30);
 		ignoreFrames.add(36);
 		ignoreFrames.add(37);
+		//924
 	}
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		initialStates = new ArrayList<>();
-		for(int i = 0; i < 60; i++) {
+		for(int i = 40; i < 41; i++) {
 			if(!(new File("states/" + i + ".gqs").exists())) {
 				continue;
 			}
@@ -53,10 +57,13 @@ public class RbyMoonBot {
 		partialManips = new PrintWriter(new File(gameName + "_partial_moon_paths.txt"));
 		
 		long startTime = System.currentTimeMillis();
-		OverworldTile[][] owTiles1 = AStar.initTiles(Map.MT_MOON_1, 17, 3, true, new MapDestination(Map.MT_MOON_1, new Location(6, 6)));
+		OverworldTile[][] owTiles1 = AStar.initTiles(Map.MT_MOON_3, 17, 3, true, new MapDestination(Map.MT_MOON_3, new Location(10, 16)));
+		owTiles1[11][20].removeEdge(OverworldAction.UP);
 		
-		owTiles1[17][10].removeEdge(OverworldAction.DOWN);
-
+		for(int i = 17; i < 32; i++) {
+			owTiles1[10][i].removeEdge(OverworldAction.RIGHT);
+		}
+		
 		long endTime = System.currentTimeMillis();
 		System.out.println("Generic edge generation time: " + (endTime - startTime) + " ms");
 		
@@ -138,6 +145,11 @@ public class RbyMoonBot {
 				}
 			}
 			int encounterIgt0 = igtMap.filter(igt -> igt.getSpecies() == 0).size();
+			int paras = igtMap.filter(result -> result.getYoloball()).size();
+			if(paras >= 1) {
+				foundManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames) + " - " + paras + "/60 hra=" + gb.getRandomAdd());
+				foundManips.flush();
+			}
 			partialManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames) + " - " + encounterIgt0 + "/60 " + npcs.size() + " differences");
 			partialManips.flush();
 			if(npcs.size() > 1) {
@@ -158,8 +170,6 @@ public class RbyMoonBot {
 						}
 					}
 					if(edge.getNextPos().getX() == lastCheckpoint.getX() && edge.getNextPos().getY() == lastCheckpoint.getY() && edge.getNextPos().getMap() == lastCheckpoint.getMap() && encounterIgt0 >= lastCheckpoint.getMinConsistency()) {
-						foundManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames) + " - " + encounterIgt0 + "/60 hra=" + gb.getRandomAdd());
-						foundManips.flush();
 						break;
 					}
 					newState = new OverworldState(ow.toString() + " " + edgeAction.logStr(), edge.getNextPos(), newStates, newCheckpoint, Math.max(0, ow.aPressCounter() - 1), ow.getNumStartPresses(), ow.getNumAPresses(), true, ow.getWastedFrames() + edgeCost, ow.getOverworldFrames() + edge.getFrames(), gb.getRandomAdd(), gb.getRandomSub());

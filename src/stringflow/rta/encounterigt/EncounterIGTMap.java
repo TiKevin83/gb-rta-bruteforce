@@ -23,7 +23,7 @@ public class EncounterIGTMap extends ArrayList<EncounterIGTResult> {
 		super(collection);
 	}
 	
-	public void addResult(Gb gb, IGTTimeStamp timeStamp, ArrayList<Integer>[] npcTimers, byte save[], boolean yoloballs[]) {
+	public void addResult(Gb gb, IGTTimeStamp timeStamp, ArrayList<Integer>[] npcTimers, byte save[], boolean yoloballs[], boolean hitTextbox) {
 		String npcTimersString = "";
 		for(int i = 1; i < npcTimers.length; i++) {
 			long timerId = 0x00000000;
@@ -41,7 +41,7 @@ public class EncounterIGTMap extends ArrayList<EncounterIGTResult> {
 			}
 		}
 		int hRandom = (gb.getRandomAdd() << 8) | gb.getRandomSub();
-		add(new EncounterIGTResult(timeStamp, gb.read("wCurMap"), gb.read("wXCoord"), gb.read("wYCoord"), hRandom, npcTimersString, save, gb.getGame().getSpecies(gb.read("wEnemyMonSpecies")), Gender.GENDERLESS, gb.read("wEnemyMonLevel"), gb.read("wEnemyMonDVs", 2), yoloballs[0], yoloballs[1], yoloballs[2], yoloballs[3], false));
+		add(new EncounterIGTResult(timeStamp, gb.read("wCurMap"), gb.read("wXCoord"), gb.read("wYCoord"), hRandom, npcTimersString, save, gb.getGame().getSpecies(gb.read("wEnemyMonSpecies")), Gender.GENDERLESS, gb.read("wEnemyMonLevel"), gb.read("wEnemyMonDVs", 2), yoloballs[0], yoloballs[1], yoloballs[2], yoloballs[3], hitTextbox));
 	}
 	
 	// gen 2 constructor
@@ -72,7 +72,8 @@ public class EncounterIGTMap extends ArrayList<EncounterIGTResult> {
 					target.printf("[%d][%d] No encounter at [%d#%d,%d]; rng 0x%04X %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getRNG(), writeNpcTimers ? "npctimers " + result.getNpcTimers() : "");
 				}
 			} else {
-				target.printf("[%d][%d] Encounter at [%d#%d,%d]: %s%s lv%d DVs %04X rng 0x%04X %s %s %s %s %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getGender() == Gender.GENDERLESS ? "" : result.getGender().getName() + " ", result.getSpeciesName(), result.getLevel(), result.getHexDVs(), result.getRNG(), writeYoloballs ? String.valueOf(result.getYoloball()) : "", writeYoloballs ? String.valueOf(result.getSelectYoloball()) : "", writeYoloballs ? String.valueOf(result.getRedbarYoloball()) : "", writeYoloballs ? String.valueOf(result.getRedbarYoloball()) : "", writeNpcTimers ? "npctimers " + result.getNpcTimers() : "");
+//				target.printf("[%d][%d] Encounter at [%d#%d,%d]: %s%s lv%d DVs %04X rng 0x%04X %s %s %s %s %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getGender() == Gender.GENDERLESS ? "" : result.getGender().getName() + " ", result.getSpeciesName(), result.getLevel(), result.getHexDVs(), result.getRNG(), writeYoloballs ? String.valueOf(result.getYoloball()) : "", writeYoloballs ? String.valueOf(result.getSelectYoloball()) : "", writeYoloballs ? String.valueOf(result.getRedbarYoloball()) : "", writeYoloballs ? String.valueOf(result.getRedbarYoloball()) : "", writeNpcTimers ? "npctimers " + result.getNpcTimers() : "");
+				target.printf("[%d][%d] Encounter at [%d#%d,%d]: %s%s lv%d DVs %04X rng 0x%04X %s\n", second, frame, result.getMap(), result.getX(), result.getY(), result.getGender() == Gender.GENDERLESS ? "" : result.getGender().getName() + " ", result.getSpeciesName(), result.getLevel(), result.getHexDVs(), result.getRNG(), writeYoloballs ? "Yoloball: " + String.valueOf(result.getYoloball()) : "");
 			}
 			target.flush();
 		});

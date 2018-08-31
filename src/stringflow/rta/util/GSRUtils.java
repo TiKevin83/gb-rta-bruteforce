@@ -18,7 +18,8 @@ public class GSRUtils {
 		System.arraycopy(data, 0, fileData, getSAVOffset(fileData), 0x8000);
 	}
 	
-	public static void writeRTC(byte data[], int offset, int value) {
+	public static void writeRTC(byte data[], int value) {
+		int offset = getOffset(data, "timesec");
 		data[offset + 0] = (byte)((value >> 24) & 0xFF);
 		data[offset + 1] = (byte)((value >> 16) & 0xFF);
 		data[offset + 2] = (byte)((value >> 8) & 0xFF);
@@ -38,7 +39,7 @@ public class GSRUtils {
 	}
 	
 	private static int readSize(byte fileData[], int offset) {
-		return (fileData[offset + 0] << 16) | (fileData[offset + 1] << 8) | fileData[offset + 2];
+		return ((fileData[offset + 0] & 0xFF) << 16) | ((fileData[offset + 1] & 0xFF) << 8) | (fileData[offset + 2] & 0xFF);
 	}
 	
 	private static int getOffset(byte fileData[], String searchKey) {

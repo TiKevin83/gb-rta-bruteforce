@@ -7,6 +7,7 @@ import stringflow.rta.BaseGame;
 import stringflow.rta.libgambatte.display.Display;
 import stringflow.rta.libgambatte.display.IDisplayUpdateCallback;
 import stringflow.rta.util.ArrayUtils;
+import stringflow.rta.util.IGTTimeStamp;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
@@ -41,7 +42,7 @@ public class Gb {
 	private Display display;
 	private ArrayList<IDisplayUpdateCallback> updateCallbacks;
 	private BaseGame game;
-
+	
 	private Memory videoBuffer;
 	private Memory audioBuffer;
 	private Memory samples;
@@ -51,7 +52,7 @@ public class Gb {
 	private int currentJoypad;
 	private Memory addressBuffer;
 	private Memory saveStateBuffer;
-	private InputCallback inputCallback;
+	private IInputCallback inputCallback;
 	private boolean warnOnZero;
 	private boolean injectInputs;
 	
@@ -76,7 +77,7 @@ public class Gb {
 		};
 		lib.gambatte_setinputgetter(gbHandle, inputCallback, null);
 	}
-
+	
 	public void destroy() {
 		if(display != null) {
 			display.close();
@@ -127,18 +128,26 @@ public class Gb {
 	}
 	
 	public void hold(int joypad) {
-		setJoypad(joypad);
+		setJoypad(joypad, game.getPrimaryInjection());
+	}
+	
+	public void hold(int joypad, IInjectCallback injectCallback) {
+		setJoypad(joypad, injectCallback);
 	}
 	
 	public void press(int joypad) {
-		setJoypad(joypad);
- 		frameAdvance();
-		setJoypad(0);
+		press(joypad, game.getPrimaryInjection());
 	}
 	
-	private void setJoypad(int joypad) {
-		if(game.getJoypadAddress() != -1 && read(0xFF88) != 0x3 && injectInputs) {
-			write(game.getJoypadAddress(), joypad);
+	public void press(int joypad, IInjectCallback injectCallback) {
+		setJoypad(joypad, injectCallback);
+		frameAdvance();
+		setJoypad(0, injectCallback);
+	}
+	
+	private void setJoypad(int joypad, IInjectCallback callback) {
+		if(read(0xFF88) != 0x3 && injectInputs) {
+			callback.inject(this, joypad);
 		}
 		currentJoypad = joypad;
 	}
@@ -181,7 +190,7 @@ public class Gb {
 		lib.gambatte_setinterruptaddresses(gbHandle, addressBuffer, addresses.length);
 		do {
 			hitAddress = frameAdvance();
-		} while (!ArrayUtils.arrayContains(addresses, hitAddress));
+		} while(!ArrayUtils.arrayContains(addresses, hitAddress));
 		lib.gambatte_setinterruptaddresses(gbHandle, addressBuffer, 0);
 		return game.getAddress(hitAddress);
 	}
@@ -221,7 +230,7 @@ public class Gb {
 			throw new RuntimeException("You need to create a display to take a screenshot!");
 		}
 		BufferedImage result = new BufferedImage(display.getRenderContext().getWidth(), display.getRenderContext().getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-		display.getRenderContext().copyToByteArray(((DataBufferByte) result.getRaster().getDataBuffer()).getData());
+		display.getRenderContext().copyToByteArray(((DataBufferByte)result.getRaster().getDataBuffer()).getData());
 		return result;
 	}
 	
@@ -256,7 +265,7 @@ public class Gb {
 	
 	public int getFrameCount() {
 		double cc = getCycleCount();
-		int frameCount = (int) ((cc / 2097152.0) * 59.7275);
+		int frameCount = (int)((cc / 2097152.0) * 59.7275);
 		return frameCount;
 	}
 	
@@ -268,11 +277,15 @@ public class Gb {
 		this.injectInputs = injectInputs;
 	}
 	
+	public IGTTimeStamp getIGT() {
+		return new IGTTimeStamp(this);
+	}
+	
 	private Address convertAddress(Object address) {
 		if(address instanceof String) {
-			return game.getAddress((String) address);
+			return game.getAddress((String)address);
 		} else if(address instanceof Integer) {
-			return game.getAddress((Integer) address);
+			return game.getAddress((Integer)address);
 		} else {
 			throw new RuntimeException("Tried to convert invalid data-type to address.");
 		}

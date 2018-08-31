@@ -6,6 +6,7 @@ import stringflow.rta.IGTState;
 import stringflow.rta.encounterigt.EncounterIGTMap;
 import stringflow.rta.libgambatte.Gb;
 import stringflow.rta.util.IGTTimeStamp;
+import stringflow.rta.util.IO;
 
 import java.util.ArrayList;
 
@@ -19,19 +20,21 @@ public class GscIGTChecker {
 	public static final int ADVANCE_TO_DVS = 2;
 	
 	private static Gb gb;
+	private static Gen2Game game;
 	private static long flags;
 	
 	//TODO: Make this also work for Crystal
 	public static EncounterIGTMap checkIgt0(Gb gb, ArrayList<IGTState> initialSaves, String path, long flags) {
 		GscIGTChecker.gb = gb;
+		GscIGTChecker.game = (Gen2Game) gb.getGame();
 		GscIGTChecker.flags = flags;
 		EncounterIGTMap igtmap = new EncounterIGTMap();
 		String actions[] = path.split(" ");
 		outer:
 		for(IGTState state : initialSaves) {
 			IGTTimeStamp igt = state.getIgt();
-			byte data[] = state.getData();
-			if(state == null) {
+			byte data[] = state.getState();
+			if(data == null) {
 				addIGTResult(igtmap, igt, true, false);
 				continue;
 			}
@@ -63,6 +66,7 @@ public class GscIGTChecker {
 	public static int rngBandCheck(Gb gb, byte initialSave[], String path, long flags) {
 		GscIGTChecker.gb = gb;
 		GscIGTChecker.flags = flags;
+		GscIGTChecker.game = (Gen2Game) gb.getGame();
 		String actions[] = path.split(" ");
 		gb.loadState(initialSave);
 		GscAction firstAction = GscAction.fromString(actions[0]);
@@ -79,7 +83,7 @@ public class GscIGTChecker {
 	}
 	
 	private static void addIGTResult(EncounterIGTMap map, IGTTimeStamp igt, boolean encounter, boolean hitSpinner) {
-		map.addResult(igt, gb.read("wMap", 2), gb.read("wXCoord"), gb.read("wYCoord"), gb.getRandomState(), !encounter && (flags & CREATE_SAVE_STATES) != 0 ? gb.saveState() : null, (flags & ADVANCE_TO_DVS) != 0 ? gb.getGame().getSpecies(gb.read("wEnemyMonSpecies")) : gb.getGame().getSpecies(encounter ? 1 : 0), gb.read("wEnemyMonLevel"), gb.read("wEnemyMonDVs"), gb.read(gb.getGame().getAddress("wEnemyMonDVs").getAddress() + 1), hitSpinner);
+		map.addResult(igt, gb.read("wMapGroup", 2), gb.read("wXCoord"), gb.read("wYCoord"), gb.getRandomState(), !encounter && (flags & CREATE_SAVE_STATES) != 0 ? gb.saveState() : null, (flags & ADVANCE_TO_DVS) != 0 ? gb.getGame().getSpecies(gb.read("wEnemyMonSpecies")) : gb.getGame().getSpecies(encounter ? 1 : 0), gb.read("wEnemyMonLevel"), gb.read("wEnemyMonDVs"), gb.read(gb.getGame().getAddress("wEnemyMonDVs").getAddress() + 1), hitSpinner);
 	}
 	
 	private static Failure execute(GscAction action) {
@@ -90,8 +94,6 @@ public class GscIGTChecker {
 			case DOWN:
 				int input = 16 * (int)(Math.pow(2.0, (action.ordinal())));
 				gb.hold(input);
-				gb.write(0xFFA9, input);
-				gb.write(0xFFAA, input);
 				Address result = gb.runUntil("countstep", "ChooseWildEncounter.startwildbattle", "ButtonSound");
 				boolean turnFrameEncounter = true;
 				if(result.equals("ButtonSound")) {
@@ -112,11 +114,8 @@ public class GscIGTChecker {
 				}
 			case START_B:
 				gb.hold(START);
-				gb.write(0xFFA9, START);
-				gb.write(0xFFAA, START);
 				gb.runUntil("joypadCall");
-				gb.write(0xFFA6, B);
-				gb.hold(B);
+				gb.hold(B, game.getMenuInjection());
 				gb.frameAdvance();
 				gb.runUntil("owplayerinput");
 				return Failure.NO_FAILURE;

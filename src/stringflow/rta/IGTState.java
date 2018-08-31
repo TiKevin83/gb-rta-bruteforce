@@ -5,18 +5,18 @@ import stringflow.rta.util.IGTTimeStamp;
 public class IGTState {
 
 	private IGTTimeStamp igt;
-	private byte data[];
+	private byte state[];
 	
-	public IGTState(IGTTimeStamp igt, byte[] data) {
+	public IGTState(IGTTimeStamp igt, byte[] state) {
 		this.igt = igt;
-		this.data = data;
+		this.state = state;
 	}
 	
 	public IGTTimeStamp getIgt() {
 		return igt;
 	}
 	
-	public byte[] getData() {
-		return data;
+	public byte[] getState() {
+		return state;
 	}
 }

@@ -2,6 +2,7 @@ package stringflow.rta.gen1;
 
 import stringflow.rta.Address;
 import stringflow.rta.Strat;
+import stringflow.rta.libgambatte.IInjectCallback;
 
 import static stringflow.rta.Joypad.*;
 
@@ -27,7 +28,6 @@ public class PokeYellow extends Gen1Game {
 		stratList.add(new Strat("cont", "_cont", 0, new Object[] { "joypad"}, new Integer[] { A }, new Integer[] { 1 }));
 		stratList.add(new Strat("backout", "_backout", 140, new Object[] { "joypad"}, new Integer[] { B }, new Integer[] { 1 }));
 		stratList.add(new Strat("title", "_title", 0, new Object[] { "joypad"}, new Integer[] { START }, new Integer[] { 1 }));
-		
 	}
 	
 	public void writeChecksum(byte sram[]) {

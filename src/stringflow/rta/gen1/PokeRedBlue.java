@@ -2,13 +2,14 @@ package stringflow.rta.gen1;
 
 import stringflow.rta.Address;
 import stringflow.rta.Strat;
+import stringflow.rta.libgambatte.IInjectCallback;
 
 import static stringflow.rta.Joypad.*;
 
 public class PokeRedBlue extends Gen1Game {
 	
 	public PokeRedBlue() {
-		super("roms/pokered.sym", 0xFFF8, 0xFFD3, 0xFFD4);
+		super("roms/pokered.sym",0xFFF8, 0xFFD3, 0xFFD4);
 		addressList.add(new Address("igtInject", 0x1C766A));
 		addressList.add(new Address("biosReadKeypad", 0x021D));
 		addressList.add(new Address("catchSuccess", 0x35868));

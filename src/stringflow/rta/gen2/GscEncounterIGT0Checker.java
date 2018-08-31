@@ -1,12 +1,15 @@
 package stringflow.rta.gen2;
 
 import stringflow.rta.IGTState;
+import stringflow.rta.InputDisplay;
 import stringflow.rta.encounterigt.EncounterIGTMap;
 import stringflow.rta.libgambatte.Gb;
 import stringflow.rta.libgambatte.LoadFlags;
 import stringflow.rta.util.GSRUtils;
 import stringflow.rta.util.IGTTimeStamp;
+import stringflow.rta.util.IO;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import static stringflow.rta.Joypad.A;
@@ -17,18 +20,18 @@ public class GscEncounterIGT0Checker {
 	private static Gb gb;
 	private static Gen2Game game;
 	
-	public static void main(String args[]) throws Exception {
-		game = new PokeGoldSilver();
+	public static void main(String args[]) {
+		game = new PokeCrystal();
 		
-		
-		String path = "L S_B R S_B L R S_B L R L R L R L U R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L D R L R L R L R L R L R L R L R L R L R L R L U D R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R U L R L D R L R L R L R L R L R L R L R L R L U R L R L R L R L R L R L R L R L R L R L R L R L D R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R L R U L R L R L R L R L R L R D D";
-		int waitTime = 1;
+		String path = "L L L L L L L L L L L L L L L D D D D D S_B D L L L L L L D L L L L L U L L U U U U R R R A U R R A U U U U L L L L L L L L L L L L L U L L U L L L D L L D D L L D L L L L L U L L L L L L L L L L L L L L L L L U L L U L U L L L L S_B L L L L L L L U U U U U U U U U U R R R R R U U U U U U U U U U U U U U U L L L U U U U L L U U L U L";
+//		path += "L L L L L L L L L L L L L L L L L L L U L L L L L L L L U U L L L U U U U U U U U U U R R S_B R R R U U U S_B U U U U";
+		int waitTime = 3;
 		
 		gb = new Gb();
 		gb.loadBios("roms/gbc_bios.bin");
-		gb.loadRom("roms/pokegold.gbc", game, LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
-		gb.setWarnOnZero(true);
-//		gb.createRenderContext(2);
+		gb.loadRom("roms/crystal_dvcheck.gbc", game, LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
+//		gb.setWarnOnZero(true);
+//		gb.createRenderContext(1);
 //		gb.setOnDisplayUpdate(new InputDisplay());
 		
 		gb.hold(START);
@@ -37,53 +40,51 @@ public class GscEncounterIGT0Checker {
 		byte sram[] = new byte[0x8000];
 		
 		GSRUtils.decodeSAV(saveState, sram);
-		GSRUtils.writeRTC(saveState, 0x9B2F, 1290);
-		sram[0x2044] = (byte)0x00;
-		sram[0x2045] = (byte)0x0A;
-		sram[0x2046] = (byte)0x39;
-		sram[0x2047] = (byte)0x00;
-		sram[0x2825] = (byte)(sram[0x2825] + 0x1);
+		GSRUtils.writeRTC(saveState,600);
+		sram[0x2045] = (byte)0x11; // StartHour
+		sram[0x2046] = (byte)0x3B; // StartMinute
+		sram[0x2047] = (byte)0x00;  // StartSecond
 		
 		ArrayList<IGTState> initialStates = new ArrayList<>();
+		gb.setInjectInputs(false);
 		for(int j = 0; j < 1; j++) {
-			for(int i = 7; i < 8; i++) {
-				sram[0x2056] = (byte)j;
-				sram[0x2057] = (byte)i;
-				writeChecksum(sram);
+			for(int i = 0; i < 60; i++) {
+				sram[0x2055] = (byte)j;
+				sram[0x2056] = (byte)i;
+				game.writeChecksum(sram);
 				GSRUtils.encodeSAV(sram, saveState);
 				gb.loadState(saveState);
 				gb.hold(START);
 				gb.runUntil("joypadCall");
 				gb.frameAdvance();
 				
-				gb.hold(START);
 				gb.runUntil("joypadCall");
 				gb.frameAdvance();
 				
-				gb.hold(START | A);
+				gb.hold(A);
 				gb.runUntil("joypadCall");
 				gb.frameAdvance();
 				
-				gb.hold(START);
+				gb.hold(0);
 				gb.runUntil("joypadCall");
-				gb.hold(START);
 				gb.frameAdvance(waitTime);
 				gb.press(A);
+				
 				initialStates.add(new IGTState(new IGTTimeStamp(0, 0, j, i), gb.saveState()));
 			}
 		}
+		gb.setInjectInputs(true);
 		System.out.println("saves done");
-		EncounterIGTMap resultMap = GscIGTChecker.checkIgt0(gb, initialStates, path, GscIGTChecker.ADVANCE_TO_DVS);
+		EncounterIGTMap resultMap = GscIGTChecker.checkIgt0(gb, initialStates, path, GscIGTChecker.ADVANCE_TO_DVS | GscIGTChecker.CREATE_SAVE_STATES);
+		EncounterIGTMap filteredMap = resultMap.filter(result -> result.getSpecies() == 0);
+//		for(File file : new  File("states").listFiles()) {
+//			file.delete();
+//		}
+//		filteredMap.forEach(result -> {
+//			IO.writeBin("states/" + result.getIgt().getFrames() + ".gqs", result.getSave());
+//		});
 		resultMap.print(System.out, false, false);
-		gb.destroy();
-	}
-	
-	private static void writeChecksum(byte sram[]) throws Exception {
-		int checksum = 0;
-		for(int i = 0x2009; i < 0x2D69; i++) {
-			checksum += (sram[i] & 0xFF);
-		}
-		sram[0x2D69] = (byte)((checksum >> 0) & 0xFF);
-		sram[0x2D6A] = (byte)((checksum >> 8) & 0xFF);
+		System.out.println(filteredMap.size() + "/60");
+//		gb.destroy();
 	}
 }

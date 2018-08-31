@@ -39,7 +39,7 @@ public class VideoCreation {
 		byte sram[] = new byte[0x8000];
 		
 		GSRUtils.decodeSAV(saveState, sram);
-		GSRUtils.writeRTC(saveState, 0x9B2F, 1290);
+		GSRUtils.writeRTC(saveState, 1290);
 		sram[0x2044] = (byte)0x00;
 		sram[0x2045] = (byte)0x0A;
 		sram[0x2046] = (byte)0x39;

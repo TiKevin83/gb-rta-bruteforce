@@ -62,8 +62,8 @@ public class RbyIGTChecker {
 		String actions[] = path.split(" ");
 		for(IGTState state : initalStates) {
 			IGTTimeStamp igt = state.getIgt();
-			byte data[] = state.getData();
-			if(state.getData() == null) {
+			byte data[] = state.getState();
+			if(state.getState() == null) {
 //				addIGTResult(igtmap, igt, true, false);
 				continue;
 			}
@@ -76,23 +76,28 @@ public class RbyIGTChecker {
 			if((params & MONITOR_NPC_TIMERS) != 0) {
 				updateNPCTimers(gb, npcTimers);
 			}
+			boolean hitTextbox = false;
 			for(String action : actions) {
 				if(action.trim().isEmpty()) {
 					continue;
 				}
-				if(!execute(OverworldAction.fromString(action), itemballs)) {
+				Failure failure = execute(OverworldAction.fromString(action), itemballs);
+				if(failure == Failure.TEXTBOX) {
+					hitTextbox = true;
+				}
+				if(failure != Failure.NO_FAILURE) {
 					break;
 				}
 				if((params & MONITOR_NPC_TIMERS) != 0) {
 					updateNPCTimers(gb, npcTimers);
 				}
 			}
-			igtmap.addResult(gb, igt, npcTimers, (params & CREATE_SAVE_STATES) != 0 && gb.read("wEnemyMonSpecies") == 0 ? RbyIGTChecker.gb.saveState() : null, yoloballs);
+			igtmap.addResult(gb, igt, npcTimers, (params & CREATE_SAVE_STATES) != 0 && gb.read("wEnemyMonSpecies") == 0 ? RbyIGTChecker.gb.saveState() : null, yoloballs, hitTextbox);
 		}
 		return igtmap;
 	}
 	
-	private static boolean execute(OverworldAction owAction, ArrayList<Itemball> itemballs) {
+	private static Failure execute(OverworldAction owAction, ArrayList<Itemball> itemballs) {
 		Address res;
 		switch(owAction) {
 			case LEFT:
@@ -106,12 +111,14 @@ public class RbyIGTChecker {
 				gb.runUntil(joypadOverworld2);
 				Address result = gb.runUntil("joypadOverworld", "newBattle", "manualTextScroll");
 				if(result.equals("manualTextScroll")) {
-					return false;
+					return Failure.TEXTBOX;
 				}
-                /*if(Map.getMapByID(dest.map).getTile(dest.x, dest.y).isWarp()) {
-                    gb.runUntil("enterMap");
-                    transitionTimes.add(readIGT());
-                }*/
+				Tile destTile = Map.getMapByID(dest.map).getTile(dest.x, dest.y);
+				if(destTile != null) {
+					if(destTile.isWarp()) {
+						gb.runUntil("enterMap");
+					}
+				}
 				while(gb.read("wXCoord") != dest.x || gb.read("wYCoord") != dest.y) {
 					if(result.equals("newBattle")) {
 						Address result2 = gb.runUntil("encounterTest", "joypadOverworld");
@@ -122,7 +129,7 @@ public class RbyIGTChecker {
 								if((params & 0xFF) == gb.read("wEnemyMonSpecies")) {
 									simulateYoloball();
 								}
-								return false;
+								return Failure.ENCOUNTER;
 							}
 						}
 					}
@@ -135,7 +142,7 @@ public class RbyIGTChecker {
 				gb.hold(0);
 				Address result2 = gb.runUntil("encounterTest", "joypadOverworld", "manualTextScroll");
 				if(result2.equals("manualTextScroll")) {
-					return false;
+					return Failure.TEXTBOX;
 				}
 				if(result2.equals("encounterTest")) {
 					int hra = gb.getRandomAdd();
@@ -145,7 +152,7 @@ public class RbyIGTChecker {
 						if((params & 0xFF) == gb.read("wEnemyMonSpecies")) {
 							simulateYoloball();
 						}
-						return false;
+						return Failure.ENCOUNTER;
 					}
 					gb.hold(0);
 					gb.runUntil("joypadOverworld");
@@ -157,18 +164,15 @@ public class RbyIGTChecker {
 						gb.runUntil("joypadOverworld");
 					}
 				}
-				return true;
+				return Failure.NO_FAILURE;
 			case A:
 				gb.hold(A);
 				gb.frameAdvance();
 				res = gb.runUntil("joypadOverworld", "printLetterDelay", "manualTextScroll");
-				if(res.equals("manualTextScroll")) {
-					return false;
-				}
 				if(res.equals("joypadOverworld")) {
-					return true;
+					return Failure.NO_FAILURE;
 				} else {
-					return false;
+					return Failure.TEXTBOX;
 				}
 			case START_B:
 				gb.hold(START);
@@ -177,7 +181,7 @@ public class RbyIGTChecker {
 				gb.hold(B);
 				gb.frameAdvance();
 				gb.runUntil("joypadOverworld");
-				return true;
+				return Failure.NO_FAILURE;
 			case S_A_B_S:
 				gb.hold(START);
 				gb.frameAdvance();
@@ -191,7 +195,7 @@ public class RbyIGTChecker {
 				gb.hold(START);
 				gb.frameAdvance();
 				gb.runUntil("joypadOverworld");
-				return true;
+				return Failure.NO_FAILURE;
 			case S_A_B_A_B_S:
 				gb.hold(START);
 				gb.frameAdvance();
@@ -211,9 +215,9 @@ public class RbyIGTChecker {
 				gb.hold(START);
 				gb.frameAdvance();
 				gb.runUntil("joypadOverworld");
-				return true;
+				return Failure.NO_FAILURE;
 			default:
-				return false;
+				return Failure.WRONG_ACTION;
 		}
 	}
 	

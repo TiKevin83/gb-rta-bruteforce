@@ -113,7 +113,7 @@ public class OverworldState {
 	public int getNumValidSaves() {
 		int result = 0;
 		for(int i = 0; i < states.size(); i++) {
-			if(states.get(0).getData() != null) {
+			if(states.get(0).getState() != null) {
 				result++;
 			}
 		}

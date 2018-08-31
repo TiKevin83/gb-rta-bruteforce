@@ -18,7 +18,15 @@ public class TextFile extends ArrayList<String> {
 			e.printStackTrace();
 		}
 	}
-
+	
+	public TextFile(Collection<String> collection) {
+		super(collection);
+	}
+	
+	public TextFile subList(int fromIndex, int toIndex) {
+		return new TextFile(super.subList(fromIndex, toIndex));
+	}
+	
 	public String getContent() {
 		String result = "";
 		for(String line : this) {

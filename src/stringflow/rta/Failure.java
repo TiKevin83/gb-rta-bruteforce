@@ -6,4 +6,5 @@ public enum Failure {
 	ENCOUNTER,
 	HIT_SPINNER,
 	WRONG_ACTION,
+	TEXTBOX
 }

@@ -19,5 +19,5 @@ public interface Libgambatte extends Library {
 	void gambatte_setinterruptaddresses(Pointer gb, Memory addrs, int numAddrs);
 	int gambatte_savestate(Pointer gb, Memory videoBuffer, int pitch, Memory statBuf);
 	boolean gambatte_loadstate(Pointer gb, Memory saveState, int size);
-	void gambatte_setinputgetter(Pointer gb, InputCallback getInput, Pointer p);
+	void gambatte_setinputgetter(Pointer gb, IInputCallback getInput, Pointer p);
 }

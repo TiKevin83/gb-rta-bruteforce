@@ -37,13 +37,13 @@ public class GscEncounterBot {
 
 //	static {
 //		checkpoints = new Checkpoint[] {//new Checkpoint(0x1803, 0x26, 0x10, 0, 0, 59),
-//				new Checkpoint(0x1803, 0xE, 0x8, 3, 1, 58),};
+//				new Checkpoint(0x1803, 0xE, 0x8, 3, 1, 5),};
 //	}
 	
 	static {
-		checkpoints = new Checkpoint[] {new Checkpoint(0x1803, 0x15, 0x4, 0, 0, 59),
+		checkpoints = new Checkpoint[] {new Checkpoint(0x1803, 0x15, 0x4, 6, 2, 57),
 				//new Checkpoint(Map.ROUTE_30.getId(), 0xD, 0xD, 0, 0, 57),
-				new Checkpoint(Map.ROUTE_30.getId(), 0x5, 0x1C, 0, 0, 58),};
+				new Checkpoint(Map.ROUTE_30.getId(), 0x5, 0x1A, 0, 0, 57),};
 	}
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -55,12 +55,12 @@ public class GscEncounterBot {
 //		checkpoints = new Checkpoint[] {//new Checkpoint(0x1803, 0x26, 0x10, 0, 0, 59),
 //				new Checkpoint(0x1803, 0xE, 0x8, numSB * 3, numSB, consistency),};
 		
-		game = new PokeGoldSilver();
+		game = new PokeCrystal();
 		
 		gb = new Gb();
 		gb.loadBios("roms/gbc_bios.bin");
-		gb.loadRom("roms/pokegold.gbc", game, LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
-		gb.setWarnOnZero(true);
+		gb.loadRom("roms/pokecrystal.gbc", game, LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
+//		gb.setWarnOnZero(true);
 //		gb.createRenderContext(2);
 		
 		int waitTime = 2;
@@ -70,7 +70,7 @@ public class GscEncounterBot {
 		byte sram[] = new byte[0x8000];
 		
 		GSRUtils.decodeSAV(saveState, sram);
-		GSRUtils.writeRTC(saveState, 0x9B2F, 570);
+		GSRUtils.writeRTC(saveState, 570);
 		sram[0x2044] = (byte)0x00;
 		sram[0x2045] = (byte)0x0A;
 		sram[0x2046] = (byte)0x39;
@@ -121,7 +121,11 @@ public class GscEncounterBot {
 		OverworldTile[][] owTiles3 = AStar.initTiles(Map.ROUTE_30, 17, 3, false, new MapDestination(Map.ROUTE_30, new Location(checkpoints[1].getX(), checkpoints[1].getY())));
 		owTiles1[0x0][0x7].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, owTiles2[0x27][0x7]));
 		owTiles2[0x11][0x0].addEdge(new OverworldEdge(OverworldAction.UP, 0, 17, owTiles3[0x7][0x35]));
-		
+		owTiles2[0x11][0x0].addEdge(new OverworldEdge(OverworldAction.UP, 0, 17, owTiles3[0x7][0x35]));
+
+		owTiles3[0x6][0x1C].removeEdge(OverworldAction.LEFT);
+		owTiles3[0x6][0x1B].removeEdge(OverworldAction.LEFT);
+
 		Collections.sort(owTiles1[0x0][0x7].getEdgeList());
 		Collections.sort(owTiles2[0x11][0x0].getEdgeList());
 		Collections.sort(owTiles3[0x7][0x34].getEdgeList());
@@ -146,10 +150,11 @@ public class GscEncounterBot {
 				}
 			}
 		}
-		
+
 		owTiles3[0x9][0x1E].print();
 		
-		gb.loadState(initialStates.get(0).getData());
+		gb.loadState(initialStates.get(0).getState());
+		gb.frameAdvance(10);
 		OverworldTile savePos = owTiles1[gb.read("wXCoord")][gb.read("wYCoord")];
 		OverworldState owState = new OverworldState(savePos.toString() + ":", savePos, initialStates, checkpoints[0], 1, 0, 0, true, 0, 0, gb.getRandomAdd(), gb.getRandomSub());
 		overworldSearch(owState);
@@ -212,7 +217,7 @@ public class GscEncounterBot {
 			int owFrames = ow.getOverworldFrames() + edge.getFrames();
 			EncounterIGTMap result = GscIGTChecker.checkIgt0(gb, ow.getStates(), edgeAction.logStr(), GscIGTChecker.CREATE_SAVE_STATES);
 			ArrayList<IGTState> newStates = new ArrayList<>();
-			for(int i = 0; i < 60; i++) {
+			for(int i = 0; i < result.size(); i++) {
 				newStates.add(new IGTState(new IGTTimeStamp(0, 0, 0, i), result.get(i).getSave()));
 			}
 			int igt0 = result.filter(igt -> igt.getSpecies() == 0).size();

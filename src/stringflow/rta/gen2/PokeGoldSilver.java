@@ -5,7 +5,7 @@ import stringflow.rta.Address;
 public class PokeGoldSilver extends Gen2Game {
 	
 	public PokeGoldSilver() {
-		super("", 0xFFE3, 0xFFE4);
+		super("", 0xFFA9, 0xFFAA, 0xFFA6, 0xFFE3, 0xFFE4);
 		addressList.add(new Address("ChooseWildEncounter.startwildbattle", "0A:6725"));
 		addressList.add(new Address("OWPlayerInput", "25:68A7"));
 		addressList.add(new Address("LoadEnemyMon.UpdateDVs", "0F:6800"));
@@ -14,7 +14,7 @@ public class PokeGoldSilver extends Gen2Game {
 		addressList.add(new Address("ButtonSound", 0x0A60));
 		
 		//wram
-		addressList.add(new Address("wMap", 0xDA00));
+		addressList.add(new Address("wMapGroup", 0xDA00));
 		addressList.add(new Address("wYCoord", 0xDA02));
 		addressList.add(new Address("wXCoord", 0xDA03));
 		addressList.add(new Address("wEnemyMonSpecies", 0xD0EF));

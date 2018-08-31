@@ -1,5 +1,6 @@
 package stringflow.rta;
 
+import stringflow.rta.libgambatte.IInjectCallback;
 import stringflow.rta.util.IO;
 import stringflow.rta.util.NamedList;
 import stringflow.rta.util.TextFile;
@@ -10,16 +11,14 @@ public abstract class BaseGame {
 	protected NamedList<Strat> stratList;
 	protected NamedList<Species> speciesList;
 	private String igtPrefix;
-	private int hJoypad;
 	private int hRandomAdd;
 	private int hRandomSub;
 	
-	public BaseGame(String symFilePath, String speciesMapPath, String igtPrefix, int hJoypad, int hRandomAdd, int hRandomSub) {
+	public BaseGame(String symFilePath, String speciesMapPath, String igtPrefix, int hRandomAdd, int hRandomSub) {
 		this.addressList = new NamedList<>();
 		this.stratList = new NamedList<>();
 		this.speciesList = new NamedList<>();
 		this.igtPrefix = igtPrefix;
-		this.hJoypad = hJoypad;
 		this.hRandomAdd = hRandomAdd;
 		this.hRandomSub = hRandomSub;
 		if(!symFilePath.trim().isEmpty()) {
@@ -49,6 +48,7 @@ public abstract class BaseGame {
 	}
 	
 	public abstract void writeChecksum(byte target[]);
+	public abstract IInjectCallback getPrimaryInjection();
 	
 	public Address getAddress(int addressIn) {
 		for(Address address : addressList) {
@@ -82,10 +82,6 @@ public abstract class BaseGame {
 	
 	public Strat getStrat(String nameIn) {
 		return stratList.get(nameIn);
-	}
-	
-	public int getJoypadAddress() {
-		return hJoypad;
 	}
 	
 	public int getRandomAdd() {
