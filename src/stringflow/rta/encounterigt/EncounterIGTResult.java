@@ -157,7 +157,7 @@ public class EncounterIGTResult implements Comparable<EncounterIGTResult> {
 	}
 	
 	public String getRNG() {
-		return String.format("0x%02X%02X%02X", rdiv, hra, hrs);
+		return String.format("0x%02X%02X", hra, hrs);
 	}
 	
 	public int compareTo(EncounterIGTResult o) {
