@@ -21,7 +21,7 @@ public class AStar {
 	
 	private static NodeSorter nodeSorter = new NodeSorter();
 	
-	public static OverworldTile[][] initTiles(Map targetMap, int numFramesPerStep, int sbcost, boolean aPresses, MapDestination... destinations) {
+	public static OverworldTile[][] initTiles(Map targetMap, int numFramesPerStep, int sbcost, boolean gen1, MapDestination... destinations) {
 		OverworldTile[][] tiles = new OverworldTile[targetMap.getWidthInTiles() + 1][targetMap.getHeightInTiles() + 1];
 		int startX = targetMap.getPokeworldOffsetX();
 		int startY = targetMap.getPokeworldOffsetY();
@@ -116,6 +116,9 @@ public class AStar {
 						if(destTile != null) {
 							int cost = Math.abs(numFramesPerStep * (destTile.getMinStepsToGrass() - tiles[i][j].getMinStepsToGrass() + 1));
 							tiles[i][j].addEdge(new OverworldEdge(OverworldAction.LEFT, cost, numFramesPerStep, destTile));
+							if(!gen1) {
+								tiles[i][j].addEdge(new OverworldEdge(OverworldAction.LEFT_A, cost, numFramesPerStep, destTile));
+							}
 						}
 					}
 				}
@@ -125,6 +128,9 @@ public class AStar {
 						if(destTile != null) {
 							int cost = Math.abs(numFramesPerStep * (destTile.getMinStepsToGrass() - tiles[i][j].getMinStepsToGrass() + 1));
 							tiles[i][j].addEdge(new OverworldEdge(OverworldAction.RIGHT, cost, numFramesPerStep, destTile));
+							if(!gen1) {
+								tiles[i][j].addEdge(new OverworldEdge(OverworldAction.RIGHT_A, cost, numFramesPerStep, destTile));
+							}
 						}
 					}
 				}
@@ -134,6 +140,9 @@ public class AStar {
 						if(destTile != null) {
 							int cost = Math.abs(numFramesPerStep * (destTile.getMinStepsToGrass() - tiles[i][j].getMinStepsToGrass() + 1));
 							tiles[i][j].addEdge(new OverworldEdge(OverworldAction.UP, cost, numFramesPerStep, destTile));
+							if(!gen1) {
+								tiles[i][j].addEdge(new OverworldEdge(OverworldAction.UP_A, cost, numFramesPerStep, destTile));
+							}
 						}
 					}
 				}
@@ -143,11 +152,15 @@ public class AStar {
 						if(destTile != null) {
 							int cost = Math.abs(numFramesPerStep * (destTile.getMinStepsToGrass() - tiles[i][j].getMinStepsToGrass() + 1));
 							tiles[i][j].addEdge(new OverworldEdge(OverworldAction.DOWN, cost, numFramesPerStep, destTile));
+							if(!gen1) {
+								tiles[i][j].addEdge(new OverworldEdge(OverworldAction.DOWN_A, cost, numFramesPerStep, destTile));
+							}
 						}
 					}
 				}
-				if(aPresses)
+				if(gen1) {
 					tiles[i][j].addEdge(new OverworldEdge(OverworldAction.A, 2, 2, tiles[i][j]));
+				}
 				tiles[i][j].addEdge(new OverworldEdge(OverworldAction.START_B, sbcost, sbcost, tiles[i][j]));
 				tiles[i][j].addEdge(new OverworldEdge(OverworldAction.S_A_B_S, sbcost + 30, sbcost + 30, tiles[i][j]));
 				tiles[i][j].addEdge(new OverworldEdge(OverworldAction.S_A_B_A_B_S, sbcost + 60, sbcost + 60, tiles[i][j]));

@@ -5,27 +5,29 @@ import stringflow.rta.encounterigt.EncounterIGTMap;
 import stringflow.rta.libgambatte.Gb;
 import stringflow.rta.ow.OverworldAction;
 import stringflow.rta.util.IGTTimeStamp;
-import stringflow.rta.util.IO;
 import stringflow.rta.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 import static stringflow.rta.Joypad.*;
 
 public class RbyIGTChecker {
 	
 	public static final int NONE = 0;
-	public static final int PICKUP_RARE_CANDY = 256;
-	public static final int PICKUP_ESCAPE_ROPE = 512;
-	public static final int PICKUP_MEGA_PUNCH = 1024;
-	public static final int PICKUP_MOON_STONE = 2048;
-	public static final int PICKUP_WATER_GUN = 4096;
-	public static final int YOLOBALL = 8192;
-	public static final int SELECT_YOLOBALL = 16384;
-	public static final int REDBAR_YOLOBALL = 32768;
-	public static final int REDBAR_SELECT_YOLOBALL = 65536;
-	public static final int MONITOR_NPC_TIMERS = 131072;
-	public static final int CREATE_SAVE_STATES = 262144;
+	public static final int PICKUP_RARE_CANDY = 1 << 8;
+	public static final int PICKUP_ESCAPE_ROPE = 1 << 9;
+	public static final int PICKUP_MEGA_PUNCH = 1 << 10;
+	public static final int PICKUP_MOON_STONE = 1 << 11;
+	public static final int PICKUP_WATER_GUN = 1 << 12;
+	public static final int YOLOBALL = 1 << 13;
+	public static final int SELECT_YOLOBALL = 1 << 14;
+	public static final int REDBAR_YOLOBALL = 1 << 15;
+	public static final int REDBAR_SELECT_YOLOBALL = 1 << 16;
+	public static final int MONITOR_NPC_TIMERS = 1 << 17;
+	public static final int CREATE_SAVE_STATES = 1 << 18;
+	public static final int ENCOUNTER_RATE_HACK = 1 << 19;
 	
 	private static final int NUM_NPCS = 15;
 	private static final Itemball WATER_GUN = new Itemball(0xD, new Location(59, 0x5, 0x1F), new Location(59, 0x6, 0x20));
@@ -34,13 +36,18 @@ public class RbyIGTChecker {
 	private static final Itemball MOON_STONE = new Itemball(0x9, new Location(59, 0x3, 0x2), new Location(59, 0x2, 0x3));
 	private static final Itemball MEGA_PUNCH = new Itemball(0x9, new Location(61, 0x1C, 0x5));
 	
-	private static Gb gb;
-	private static long params;
-	private static boolean yoloballs[];
+	private Gb gb;
+	private long params;
+	private boolean yoloballs[];
+	private ArrayList<Integer> enterMapCalls;
+	private ArrayList<Integer> itemPickups;
 	
-	public static EncounterIGTMap checkIGT0(Gb gb, ArrayList<IGTState> initalStates, String path, long params) {
-		RbyIGTChecker.gb = gb;
-		RbyIGTChecker.params = params;
+	public RbyIGTChecker(Gb gb) {
+		this.gb = gb;
+	}
+	
+	public EncounterIGTMap checkIGT0(Collection<IGTState> initalStates, String path, long params) {
+		this.params = params;
 		ArrayList<Itemball> itemballs = new ArrayList<>();
 		if((params & PICKUP_RARE_CANDY) != 0) {
 			itemballs.add(RARE_CANDY);
@@ -63,16 +70,17 @@ public class RbyIGTChecker {
 		for(IGTState state : initalStates) {
 			IGTTimeStamp igt = state.getIgt();
 			byte data[] = state.getState();
-			if(state.getState() == null) {
-//				addIGTResult(igtmap, igt, true, false);
-				continue;
-			}
 			gb.loadState(data);
 			gb.runUntil("joypadOverworld");
 			for(int i = 0; i < NUM_NPCS; i++) {
 				npcTimers[i] = new ArrayList<>();
 			}
 			yoloballs = new boolean[4];
+			enterMapCalls = new ArrayList<>();
+			itemPickups = new ArrayList<>();
+			if(state.getEnterMapIGT() != -1) {
+				enterMapCalls.add(state.getEnterMapIGT());
+			}
 			if((params & MONITOR_NPC_TIMERS) != 0) {
 				updateNPCTimers(gb, npcTimers);
 			}
@@ -92,12 +100,15 @@ public class RbyIGTChecker {
 					updateNPCTimers(gb, npcTimers);
 				}
 			}
-			igtmap.addResult(gb, igt, npcTimers, (params & CREATE_SAVE_STATES) != 0 && gb.read("wEnemyMonSpecies") == 0 ? RbyIGTChecker.gb.saveState() : null, yoloballs, hitTextbox);
+			igtmap.addResult(gb, igt, npcTimers, (params & CREATE_SAVE_STATES) != 0 && gb.read("wEnemyMonSpecies") == 0 ? gb.saveState() : null, enterMapCalls, itemPickups, yoloballs, hitTextbox);
 		}
 		return igtmap;
 	}
 	
-	private static Failure execute(OverworldAction owAction, ArrayList<Itemball> itemballs) {
+	private Failure execute(OverworldAction owAction, ArrayList<Itemball> itemballs) {
+		if((params & ENCOUNTER_RATE_HACK) != 0) {
+			gb.write("wgrassrate", 0);
+		}
 		Address res;
 		switch(owAction) {
 			case LEFT:
@@ -116,7 +127,8 @@ public class RbyIGTChecker {
 				Tile destTile = Map.getMapByID(dest.map).getTile(dest.x, dest.y);
 				if(destTile != null) {
 					if(destTile.isWarp()) {
-						gb.runUntil("enterMap");
+						gb.runUntil("EnterMap");
+						enterMapCalls.add(gb.getIGT().getTotalFrames());
 					}
 				}
 				while(gb.read("wXCoord") != dest.x || gb.read("wYCoord") != dest.y) {
@@ -148,7 +160,6 @@ public class RbyIGTChecker {
 					int hra = gb.getRandomAdd();
 					if(hra < gb.read("wGrassRate")) {
 						gb.frameAdvance(3);
-						IO.writeBin("vohiyostate.gqs", gb.saveState());
 						if((params & 0xFF) == gb.read("wEnemyMonSpecies")) {
 							simulateYoloball();
 						}
@@ -160,6 +171,7 @@ public class RbyIGTChecker {
 						gb.press(A);
 						gb.hold(A);
 						gb.runUntil("TextCommand0B");
+						itemPickups.add(gb.getIGT().getTotalFrames());
 						gb.hold(0);
 						gb.runUntil("joypadOverworld");
 					}
@@ -168,7 +180,7 @@ public class RbyIGTChecker {
 			case A:
 				gb.hold(A);
 				gb.frameAdvance();
-				res = gb.runUntil("joypadOverworld", "printLetterDelay", "manualTextScroll");
+				res = gb.runUntil("joypadOverworld", "manualTextScroll");
 				if(res.equals("joypadOverworld")) {
 					return Failure.NO_FAILURE;
 				} else {
@@ -222,7 +234,7 @@ public class RbyIGTChecker {
 	}
 	
 	
-	private static void simulateYoloball() {
+	private void simulateYoloball() {
 		gb.runUntil("manualTextScroll");
 		byte hpSave[] = gb.saveState();
 		int currentHPAddress = gb.getGame().getAddress("wPartyMon1HP").getAddress() + 1;
@@ -237,7 +249,7 @@ public class RbyIGTChecker {
 		}
 	}
 	
-	private static void executeYoloball(boolean regular, boolean select, int indexOffset) {
+	private void executeYoloball(boolean regular, boolean select, int indexOffset) {
 		boolean isYellow = gb.getGame() instanceof PokeYellow;
 		gb.press(A);
 		gb.runUntil(isYellow && gb.read("wPartySpecies") == gb.getGame().getSpecies("PIKACHU").getIndexNumber() ? "PlayPikachuSoundClip" : "playCry");
@@ -281,7 +293,7 @@ public class RbyIGTChecker {
 		}
 	}
 	
-	private static void updateNPCTimers(Gb gb, ArrayList<Integer> timers[]) {
+	private void updateNPCTimers(Gb gb, ArrayList<Integer> timers[]) {
 		for(int index = 1; index < NUM_NPCS; index++) {
 			String addressPrefix = "wSprite" + StringUtils.getSpriteAddressIndexString(index);
 			if(gb.read(addressPrefix + "SpriteImageIdx") != 0xFF) {
@@ -290,7 +302,7 @@ public class RbyIGTChecker {
 		}
 	}
 	
-	private static boolean timeToPickUpItem(Gb gb, ArrayList<Itemball> itemballs) {
+	private boolean timeToPickUpItem(Gb gb, ArrayList<Itemball> itemballs) {
 		for(Itemball itemball : itemballs) {
 			if(itemball.canBePickedUp(gb) && !itemball.isPickedUp(gb)) {
 				return true;
@@ -299,7 +311,7 @@ public class RbyIGTChecker {
 		return false;
 	}
 	
-	private static Location getDestination(Gb gb, int input) {
+	private Location getDestination(Gb gb, int input) {
 		int map = gb.read("wCurMap");
 		int x = gb.read("wXCoord");
 		int y = gb.read("wYCoord");

@@ -46,6 +46,10 @@ public class IO {
 		}
 	}
 	
+	public static void copyBin(String src, String dest) {
+		writeBin(dest, readBin(src));
+	}
+	
 	public static BufferedImage readImage(String path) {
 		try {
 			return ImageIO.read(new File(path));

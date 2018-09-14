@@ -145,10 +145,18 @@ public class Gb {
 		setJoypad(0, injectCallback);
 	}
 	
-	private void setJoypad(int joypad, IInjectCallback callback) {
+	public void injectInput(int joypad) {
+		injectInput(joypad, game.getPrimaryInjection());
+	}
+	
+	public void injectInput(int joypad, IInjectCallback injectCallback) {
 		if(read(0xFF88) != 0x3 && injectInputs) {
-			callback.inject(this, joypad);
+			injectCallback.inject(this, joypad);
 		}
+	}
+	
+	private void setJoypad(int joypad, IInjectCallback injectCallback) {
+		injectInput(joypad, injectCallback);
 		currentJoypad = joypad;
 	}
 	
@@ -279,6 +287,10 @@ public class Gb {
 	
 	public IGTTimeStamp getIGT() {
 		return new IGTTimeStamp(this);
+	}
+	
+	public int getRdiv() {
+		return read(0xFF04);
 	}
 	
 	private Address convertAddress(Object address) {

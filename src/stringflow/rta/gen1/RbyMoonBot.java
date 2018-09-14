@@ -3,7 +3,6 @@ package stringflow.rta.gen1;
 import stringflow.rta.*;
 import stringflow.rta.astar.AStar;
 import stringflow.rta.encounterigt.EncounterIGTMap;
-import stringflow.rta.encounterigt.EncounterIGTResult;
 import stringflow.rta.libgambatte.Gb;
 import stringflow.rta.libgambatte.LoadFlags;
 import stringflow.rta.ow.OverworldAction;
@@ -18,12 +17,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 public class RbyMoonBot {
 	
 	private static final String gameName;
 	private static final Checkpoint checkpoints[];
-	private static final ArrayList<Integer> ignoreFrames = new ArrayList<Integer>();
+	private static final IGTTimeStamp ignoreFrames[];
 	private static final long flags;
 	private static PrintWriter partialManips;
 	private static PrintWriter foundManips;
@@ -32,13 +32,16 @@ public class RbyMoonBot {
 	
 	private static ArrayList<IGTState> initialStates;
 	private static OverworldTile savePos;
+	private static RbyIGTChecker igtChecker;
 	
 	static {
 		gameName = "yellow";
 		flags = RbyIGTChecker.MONITOR_NPC_TIMERS | RbyIGTChecker.CREATE_SAVE_STATES;
 		checkpoints = new Checkpoint[] {new Checkpoint(59, 6, 6, 6, 0, 58), };
-		ignoreFrames.add(36);
-		ignoreFrames.add(37);
+		ignoreFrames = new IGTTimeStamp[] {
+				new IGTTimeStamp(0, 0, 0, 36),
+				new IGTTimeStamp(0, 0, 0, 37)
+		};
 	}
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -64,6 +67,7 @@ public class RbyMoonBot {
 		gb.loadBios("roms/gbc_bios.bin");
 		gb.loadRom("roms/pokeblue.gbc", new PokeRedBlue(), LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
 //		gb.createRenderContext(2);
+		igtChecker = new RbyIGTChecker(gb);
 		gb.loadState(initialStates.get(0).getState());
 		gb.frameAdvance(2);
 		savePos = owTiles1[gb.read("wXCoord")][gb.read("wYCoord")];
@@ -127,20 +131,13 @@ public class RbyMoonBot {
 			OverworldState newState;
 			int owFrames = ow.getOverworldFrames() + edge.getFrames();
 			gb.hold(0);
-			EncounterIGTMap igtMap = RbyIGTChecker.checkIGT0(gb, ow.getStates(), edgeAction.logStr(), flags);
-			HashSet<String> npcs = new HashSet<>();
-			ArrayList<IGTState> newStates = new ArrayList<>();
-			for(int i = 0; i < igtMap.size(); i++) {
-				EncounterIGTResult result = igtMap.get(i);
-				newStates.add(new IGTState(result.getIgt(), result.getSave()));
-				if(!ignoreFrames.contains(result.getIgt().getFrames())) {
-					npcs.add(igtMap.get(i).getNpcTimers());
-				}
-			}
+			EncounterIGTMap igtMap = igtChecker.checkIGT0(ow.getStates(), edgeAction.logStr(), flags);
+			int numDifferentNPCs = igtMap.getNumDifferentNPCs(ignoreFrames);
+			ArrayList<IGTState> newStates = igtMap.stream().map(result -> new IGTState(result.getIgt(), result.getSave())).collect(Collectors.toCollection(ArrayList::new));
 			int encounterIgt0 = igtMap.filter(igt -> igt.getSpecies() == 0).size();
-			partialManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames) + " - " + encounterIgt0 + "/60 " + npcs.size() + " differences");
+			partialManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames) + " - " + encounterIgt0 + "/60 " + numDifferentNPCs + " differences");
 			partialManips.flush();
-			if(npcs.size() > 1) {
+			if(numDifferentNPCs > 1) {
 				continue;
 			}
 			if(encounterIgt0 < ow.getCurrentTarget().getMinConsistency()) {

@@ -102,7 +102,7 @@ public class OverworldTile {
     public void removeEdge(OverworldAction action) {
     	OverworldEdge edge = getEdge(action);
     	if(edge == null) {
-    		throw new RuntimeException("Edge with action " + action.name() + " can not be found");
+    		return;
 		}
 		edgeList.remove(edge);
 	}

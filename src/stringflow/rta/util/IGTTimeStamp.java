@@ -42,4 +42,13 @@ public class IGTTimeStamp {
 	public int getTotalFrames() {
 		return hours * 216000 + minutes * 3600 + seconds * 60 + frames;
 	}
+	
+	public boolean equals(Object o) {
+		IGTTimeStamp other = (IGTTimeStamp) o;
+		return getTotalFrames() == other.getTotalFrames();
+	}
+	
+	public int hashCode() {
+		return getTotalFrames();
+	}
 }

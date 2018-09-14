@@ -52,6 +52,8 @@ public class Map {
 	public static Map ROUTE_23 = new Map(34, 10, 0, 26, 10, "./maps/ROUTE_23.bin");
 	public static Map ROUTE_24 = new Map(35, 10, 230, 0, 25, "./maps/ROUTE_24.bin");
 	public static Map ROUTE_25 = new Map(36, 30, 250, 0, 15, "./maps/ROUTE_25.bin");
+	
+	
 	// I don't really know how the pokeworld coords would look like for indoor
 	// maps
 	public static Map SAFARI_ZONE_EAST = new Map(217, 15, 500, 500, 30, "./maps/SAFARI_ZONE_EAST.bin");
@@ -199,9 +201,13 @@ public class Map {
 			}
 			maps[id] = this;
 			// Hardcoded trainer vision shenanagains
-			if(id == 0x1A01) {
-				//tiles[0xE][0x16].setCanMoveUp(false);
-				//tiles[0xF][0x16].setCanMoveUp(false);
+			if(id == 14) {
+				tiles[0x20][0x9].setCanMoveRight(false);
+				tiles[0x20][0x8].setCanMoveRight(false);
+			}
+			if(id == 0x1803) {
+				tiles[0xB][0x8].setCanMoveDown(false);
+				tiles[0x9][0x6].setCanMoveLeft(false);
 			}
 			if(id == 60) {
 				tiles[6][5].setCanMoveLeft(false);
@@ -316,6 +322,10 @@ public class Map {
 				tiles[34][9].setCanMoveUp(false);
 				tiles[35][9].setCanMoveUp(false);
 				tiles[36][9].setCanMoveUp(false);
+				
+				tiles[34][32].setCanMoveUp(false);
+				tiles[35][24].setCanMoveUp(false);
+				tiles[6][31].setCanMoveLeft(false);
 			}
 			if(id == 51) {
 				overworldTiles[14][17] = null;
