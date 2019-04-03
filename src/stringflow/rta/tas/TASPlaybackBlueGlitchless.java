@@ -1,6 +1,5 @@
 package stringflow.rta.tas;
 
-import stringflow.rta.Checkpoint;
 import stringflow.rta.IGTState;
 import stringflow.rta.InputDisplay;
 import stringflow.rta.Location;
@@ -30,7 +29,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static stringflow.rta.Joypad.*;
 
@@ -38,13 +36,8 @@ public class TASPlaybackBlueGlitchless {
 	private static HashSet<String> seenStates = new HashSet<>();
 	private static Gb gb = new Gb();
 	private static RbyIGTChecker igtChecker = new RbyIGTChecker(gb);
-	/*private static Checkpoint checkpoints[] = new Checkpoint[] {
-			new Checkpoint(Map.VIRIDIAN_CITY.getId(), 0, 14, 400, 0, 0),
-			new Checkpoint(Map.VIRIDIAN_CITY.getId(), 0, 15, 400, 0, 0),
-			new Checkpoint(Map.VIRIDIAN_CITY.getId(), 0, 16, 400, 0, 0),
-			new Checkpoint(Map.VIRIDIAN_CITY.getId(), 0, 17, 400, 0, 0)
-			};*/
 	private static PrintWriter partialManips;
+	private static PrintWriter nidoManips;
 	private static PrintWriter godNidoManips;
 	private static Gen1Game pokeRedBlue = new PokeRedBlue();
 	private static final long flags = RbyIGTChecker.CREATE_SAVE_STATES | pokeRedBlue.getSpecies(2).getIndexNumber();
@@ -55,6 +48,7 @@ public class TASPlaybackBlueGlitchless {
 		final int joypadFlags[] = { UP, DOWN, LEFT, RIGHT, START, SELECT, B, A };
 		try {
 			partialManips = new PrintWriter(new File("tas_partialManips.txt"));
+			nidoManips = new PrintWriter(new File("tas_nidoManips.txt"));
 			godNidoManips = new PrintWriter(new File("tas_godNidoManips.txt"));
 		} catch (FileNotFoundException e) {
 		}
@@ -72,17 +66,22 @@ public class TASPlaybackBlueGlitchless {
 		gb.loadBios("roms/gbc_bios.bin");
 		gb.loadRom("roms/pokeblue.gb", pokeRedBlue, LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
 		gb.setInjectInputs(false);
-		gb.createRenderContext(2);
 		gb.setOnDisplayUpdate(new InputDisplay());
 		for(int i = 0; i < buttons.length; i++) {
 			gb.press(buttons[i]);
 		}
+		gb.write("wEnemyMonSpecies", 0);
 		byte startState[] = gb.saveState();
-		OverworldTile[][] owTiles1 = AStar.initTiles(Map.VIRIDIAN_CITY, 17, 50, true, new MapDestination(Map.VIRIDIAN_CITY, new Location(0,17)));
-
+		OverworldTile[][] owTiles1 = AStar.initTiles(Map.VIRIDIAN_CITY, 17, 50, true, new MapDestination(Map.VIRIDIAN_CITY, MapDestination.WEST_CONNECTION));
 		OverworldTile[][] owTiles2 = AStar.initTiles(Map.ROUTE_22, 17, 50, true, new MapDestination(Map.ROUTE_22, new Location(33, 11)));
 
+		owTiles1[0][14].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, owTiles2[39][9]));
+		owTiles1[0][15].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, owTiles2[39][9]));
+		owTiles1[0][16].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, owTiles2[39][9]));
 		owTiles1[0][17].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, owTiles2[39][9]));
+		Collections.sort(owTiles1[0][14].getEdgeList());
+		Collections.sort(owTiles1[0][15].getEdgeList());
+		Collections.sort(owTiles1[0][16].getEdgeList());
 		Collections.sort(owTiles1[0][17].getEdgeList());
 		OverworldTile savePos = owTiles1[gb.read("wXCoord")][gb.read("wYCoord")];
 		
@@ -96,7 +95,7 @@ public class TASPlaybackBlueGlitchless {
 		if(!seenStates.add(ow.getUniqId())) {
 			return;
 		}
-		int maxCost = 1600;
+		int maxCost = 400;
 		int maxStartFlashes = 0;
 		for(OverworldEdge edge : ow.getPos().getEdgeList()) {
 			OverworldAction edgeAction = edge.getAction();
@@ -121,17 +120,29 @@ public class TASPlaybackBlueGlitchless {
 			newStates.add(new IGTState(igtMap.get(0).getIgt(), igtMap.get(0).getSave()));
 			partialManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames));
 			partialManips.flush();
+			
+		    EncounterIGTResult encounter = igtMap.get(0);
+            if(encounter.getSpecies() == 3 && encounter.getLevel() == 3) {
+            	String nidoString = ow.toString() + " " + edgeAction.logStr() + " " + encounter.getSpeciesName() + " " + encounter.getLevel() + " " + encounter.getDVs().toHexString() + ", cost: " + (ow.getWastedFrames() + edgeCost);
+                if(encounter.getDVs().getAttack() == 15 && encounter.getDVs().getDefense()%2 == 0 && encounter.getDVs().getDefense() < 9 && encounter.getDVs().getSpeed() == 14 && encounter.getDVs().getSpecial() == 15) {
+                	godNidoManips.println(nidoString);
+                    godNidoManips.flush();
+                } else {
+                	nidoManips.println(nidoString);
+                    nidoManips.flush();
+                }
+                continue;
+            } else if (encounter.getSpecies() != 0) {
+            	continue;
+            }
 			switch(edgeAction) {
 				case LEFT:
 				case UP:
-					EncounterIGTMap l3Nidos = igtMap.filter(result -> result.getSpecies() == 9 && result.getLevel() == 3);
-                    for (int i = 0; i < l3Nidos.size(); i++) {
-                        EncounterIGTResult result = l3Nidos.get(i);
-                        godNidoManips.println("[" + i + "], " + result.getSpeciesName() + " " + result.getLevel() + " " + result.getDVs().toHexString());
-                    }
-                    godNidoManips.flush();
 				case RIGHT:
 				case DOWN:
+					newState = new OverworldState(ow.toString() + " " + edgeAction.logStr(), edge.getNextPos(), newStates, ow.getCurrentTarget(), Math.max(0, ow.aPressCounter() - 1), ow.getNumStartPresses(), ow.getNumAPresses(), true, ow.getWastedFrames() + edgeCost, ow.getOverworldFrames() + edge.getFrames(), gb.getRandomAdd(), gb.getRandomSub());
+					overworldSearch(newState);
+					break;
 				case A:
 					newState = new OverworldState(ow.toString() + " " + edgeAction.logStr(), edge.getNextPos(), newStates, ow.getCurrentTarget(), 2, ow.getNumStartPresses(), ow.getNumAPresses() + 1, true, ow.getWastedFrames() + 2, ow.getOverworldFrames() + 2, gb.getRandomAdd(), gb.getRandomSub());
 					overworldSearch(newState);
