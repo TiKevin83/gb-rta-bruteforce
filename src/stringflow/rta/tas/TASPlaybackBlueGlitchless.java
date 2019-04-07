@@ -29,6 +29,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static stringflow.rta.Joypad.*;
 
@@ -40,8 +43,9 @@ public class TASPlaybackBlueGlitchless {
 	private static PrintWriter nidoManips;
 	private static PrintWriter godNidoManips;
 	private static Gen1Game pokeRedBlue = new PokeRedBlue();
-	private static final long flags = RbyIGTChecker.CREATE_SAVE_STATES | pokeRedBlue.getSpecies(2).getIndexNumber();
-
+	private static final long flags = RbyIGTChecker.CREATE_SAVE_STATES | pokeRedBlue.getSpecies(3).getIndexNumber();
+	private static final int maxCost = 60;
+	private static final int maxStartFlashes = 0;
 
 	public static void main(String args[]) {
 		
@@ -53,50 +57,60 @@ public class TASPlaybackBlueGlitchless {
 		} catch (FileNotFoundException e) {
 		}
 		
-		TextFile textFile = IO.readText("tasInputs/bluenido.txt");
-		List<String> frames = textFile.subList(2, textFile.size() - 1);
-		byte buttons[] = new byte[frames.size()];
-		for(int frameNumber = 0; frameNumber < frames.size(); frameNumber++) {
+		TextFile tasInputs = IO.readText("tasInputs/bluenido.txt");
+		List<String> tasFrames = tasInputs.subList(2, tasInputs.size() - 1);
+		byte buttons[] = new byte[tasFrames.size()];
+		for(int frameNumber = 0; frameNumber < tasFrames.size(); frameNumber++) {
 			for(int joypadIndex = 0; joypadIndex < joypadFlags.length; joypadIndex++) {
-				if(frames.get(frameNumber).charAt(joypadIndex + 1) != '.')  {
+				if(tasFrames.get(frameNumber).charAt(joypadIndex + 1) != '.')  {
 					buttons[frameNumber] |= joypadFlags[joypadIndex];
 				}
 			}
 		}
+		
 		gb.loadBios("roms/gbc_bios.bin");
 		gb.loadRom("roms/pokeblue.gb", pokeRedBlue, LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
+		gb.createRenderContext(2);
 		gb.setInjectInputs(false);
 		gb.setOnDisplayUpdate(new InputDisplay());
 		for(int i = 0; i < buttons.length; i++) {
 			gb.press(buttons[i]);
 		}
 		gb.write("wEnemyMonSpecies", 0);
-		byte startState[] = gb.saveState();
-		OverworldTile[][] owTiles1 = AStar.initTiles(Map.VIRIDIAN_CITY, 17, 50, true, new MapDestination(Map.VIRIDIAN_CITY, MapDestination.WEST_CONNECTION));
-		OverworldTile[][] owTiles2 = AStar.initTiles(Map.ROUTE_22, 17, 50, true, new MapDestination(Map.ROUTE_22, new Location(33, 11)));
+		OverworldTile[][] viridianOwTiles = AStar.initTiles(Map.VIRIDIAN_CITY, 17, 50, true, new MapDestination(Map.VIRIDIAN_CITY, MapDestination.WEST_CONNECTION));
+		OverworldTile[][] route22OwTiles = AStar.initTiles(Map.ROUTE_22, 17, 50, true, new MapDestination(Map.ROUTE_22, MapDestination.GRASS_PATCHES));
 
-		owTiles1[0][14].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, owTiles2[39][9]));
-		owTiles1[0][15].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, owTiles2[39][9]));
-		owTiles1[0][16].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, owTiles2[39][9]));
-		owTiles1[0][17].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, owTiles2[39][9]));
-		Collections.sort(owTiles1[0][14].getEdgeList());
-		Collections.sort(owTiles1[0][15].getEdgeList());
-		Collections.sort(owTiles1[0][16].getEdgeList());
-		Collections.sort(owTiles1[0][17].getEdgeList());
-		OverworldTile savePos = owTiles1[gb.read("wXCoord")][gb.read("wYCoord")];
+		viridianOwTiles[0][14].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][9]));
+		viridianOwTiles[0][15].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][9]));
+		viridianOwTiles[0][16].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][9]));
+		viridianOwTiles[0][17].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][9]));
+		Collections.sort(viridianOwTiles[0][14].getEdgeList());
+		Collections.sort(viridianOwTiles[0][15].getEdgeList());
+		Collections.sort(viridianOwTiles[0][16].getEdgeList());
+		Collections.sort(viridianOwTiles[0][17].getEdgeList());
 		
-		ArrayList<IGTState> initialStates = new ArrayList<>(Arrays.asList(new IGTState(new IGTTimeStamp(0,0,0,0), startState)));
-		OverworldState owStates = new OverworldState(savePos.toString() + ":", savePos, initialStates, null, 1, 0, 0, true, 0, 0, gb.getRandomAdd(), gb.getRandomSub());
+		OverworldTile savePos = viridianOwTiles[gb.read("wXCoord")][gb.read("wYCoord")];
 		
-		overworldSearch(owStates);
+		overworldSearch(new OverworldState(
+				savePos.toString() + ":",
+				savePos,
+				new ArrayList<>(Arrays.asList(new IGTState(new IGTTimeStamp(0,0,0,0), gb.saveState()))),
+				null,
+				1,
+				0,
+				0,
+				true,
+				0,
+				0,
+				gb.getRandomAdd(),
+				gb.getRandomSub()
+		));
 	}
 	
 	private static void overworldSearch(OverworldState ow) {
-		if(!seenStates.add(ow.getUniqId())) {
+		if (!seenStates.add(ow.getUniqId())) {
 			return;
 		}
-		int maxCost = 400;
-		int maxStartFlashes = 0;
 		for(OverworldEdge edge : ow.getPos().getEdgeList()) {
 			OverworldAction edgeAction = edge.getAction();
 			if(ow.aPressCounter() > 0 && (edgeAction == OverworldAction.A || edgeAction == OverworldAction.START_B || edgeAction == OverworldAction.S_A_B_S || edgeAction == OverworldAction.S_A_B_A_B_S)) {
@@ -112,19 +126,12 @@ public class TASPlaybackBlueGlitchless {
 			if(ow.getWastedFrames() + edgeCost > maxCost) {
 				continue;
 			}
-			OverworldState newState;
 			int owFrames = ow.getOverworldFrames() + edge.getFrames();
 			gb.hold(0);
-			EncounterIGTMap igtMap = igtChecker.checkIGT0(ow.getStates(), edgeAction.logStr(), flags);
-			ArrayList<IGTState> newStates = new ArrayList<IGTState>();
-			newStates.add(new IGTState(igtMap.get(0).getIgt(), igtMap.get(0).getSave()));
-			partialManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames));
-			partialManips.flush();
-			
-		    EncounterIGTResult encounter = igtMap.get(0);
+		    EncounterIGTResult encounter = igtChecker.checkIGT0(ow.getStates(), edgeAction.logStr(), flags).get(0);
             if(encounter.getSpecies() == 3 && encounter.getLevel() == 3) {
-            	String nidoString = ow.toString() + " " + edgeAction.logStr() + " " + encounter.getSpeciesName() + " " + encounter.getLevel() + " " + encounter.getDVs().toHexString() + ", cost: " + (ow.getWastedFrames() + edgeCost);
-                if(encounter.getDVs().getAttack() == 15 && encounter.getDVs().getDefense()%2 == 0 && encounter.getDVs().getDefense() < 9 && encounter.getDVs().getSpeed() == 14 && encounter.getDVs().getSpecial() == 15) {
+            	String nidoString = ow.toString() + " " + edgeAction.logStr() + " " + encounter.getSpeciesName() + " " + encounter.getLevel() + " " + encounter.getDVs().toHexString() + ", cost: " + (ow.getWastedFrames() + edgeCost)  + ", owFrames: " + (owFrames) + ", time: " + gb.getFrameCount();
+                if(encounter.getDVs().getAttack() == 15 && encounter.getDVs().getSpeed() == 14 && encounter.getDVs().getSpecial() > 13) {
                 	godNidoManips.println(nidoString);
                     godNidoManips.flush();
                 } else {
@@ -134,26 +141,54 @@ public class TASPlaybackBlueGlitchless {
                 continue;
             } else if (encounter.getSpecies() != 0) {
             	continue;
+            } else {
+    			partialManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames) + ", time: " + gb.getFrameCount());
+    			partialManips.flush();
             }
+			ArrayList<IGTState> newStates = new ArrayList<IGTState>();
+			newStates.add(new IGTState(encounter.getIgt(), encounter.getSave()));
+            int aPress = ow.aPressCounter();
+            int startPresses = ow.getNumStartPresses();
+            int aPresses = ow.getNumAPresses();
+            int wastedFrames = ow.getWastedFrames();
 			switch(edgeAction) {
 				case LEFT:
 				case UP:
 				case RIGHT:
 				case DOWN:
-					newState = new OverworldState(ow.toString() + " " + edgeAction.logStr(), edge.getNextPos(), newStates, ow.getCurrentTarget(), Math.max(0, ow.aPressCounter() - 1), ow.getNumStartPresses(), ow.getNumAPresses(), true, ow.getWastedFrames() + edgeCost, ow.getOverworldFrames() + edge.getFrames(), gb.getRandomAdd(), gb.getRandomSub());
-					overworldSearch(newState);
+					aPress = Math.max(0, aPress - 1);
+					wastedFrames += edgeCost;
 					break;
 				case A:
-					newState = new OverworldState(ow.toString() + " " + edgeAction.logStr(), edge.getNextPos(), newStates, ow.getCurrentTarget(), 2, ow.getNumStartPresses(), ow.getNumAPresses() + 1, true, ow.getWastedFrames() + 2, ow.getOverworldFrames() + 2, gb.getRandomAdd(), gb.getRandomSub());
-					overworldSearch(newState);
+					aPress = 2;
+					aPresses++;
+					wastedFrames += 2;
+					owFrames = ow.getOverworldFrames() + 2;
 					break;
 				case START_B:
-					newState = new OverworldState(ow.toString() + " " + edgeAction.logStr(), edge.getNextPos(), newStates, ow.getCurrentTarget(), 1, ow.getNumStartPresses() + 1, ow.getNumAPresses(), true, ow.getWastedFrames() + edgeCost, ow.getOverworldFrames() + edgeCost, gb.getRandomAdd(), gb.getRandomSub());
-					overworldSearch(newState);
+					aPress = 1;
+					startPresses++;
+					wastedFrames += edgeCost;
+					owFrames = ow.getOverworldFrames() + edgeCost;
 					break;
 				default:
 					break;
 			}
+			overworldSearch(new OverworldState(
+				ow.toString() + " " + edgeAction.logStr(),
+				edge.getNextPos(),
+				newStates,
+				ow.getCurrentTarget(),
+				aPress,
+				startPresses,
+				aPresses,
+				true,
+				wastedFrames,
+				owFrames,
+				gb.getRandomAdd(),
+				gb.getRandomSub()
+				)
+			);
 		}
 	}
 }
