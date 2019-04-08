@@ -3,7 +3,7 @@ gb-rta-bruteforce
 
 #### Overview
 
-This is a bruteforce bot to find God Nidorans for Pokemon Red RTA. It could be adapted to find other encounters in other places too.
+This is a bruteforce bot to find God Nidorans for Pokemon Red RTA with some flexibility added for TASing. It could be adapted to find other encounters in other places too.
 
 It runs a modified [GSR's libgambatte](https://github.com/gifvex/gambatte-speedrun) as a core, and spits out giant log files to be combed over manually.
 
