@@ -2,11 +2,9 @@ package stringflow.rta.tas;
 
 import stringflow.rta.IGTState;
 import stringflow.rta.InputDisplay;
-import stringflow.rta.Location;
 import stringflow.rta.Map;
 import stringflow.rta.MapDestination;
 import stringflow.rta.astar.AStar;
-import stringflow.rta.encounterigt.EncounterIGTMap;
 import stringflow.rta.encounterigt.EncounterIGTResult;
 import stringflow.rta.gen1.Gen1Game;
 import stringflow.rta.gen1.PokeRedBlue;
@@ -29,9 +27,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static stringflow.rta.Joypad.*;
 
@@ -39,19 +34,17 @@ public class TASPlaybackBlueGlitchless {
 	private static HashSet<String> seenStates = new HashSet<>();
 	private static Gb gb = new Gb();
 	private static RbyIGTChecker igtChecker = new RbyIGTChecker(gb);
-	private static PrintWriter partialManips;
 	private static PrintWriter nidoManips;
 	private static PrintWriter godNidoManips;
 	private static Gen1Game pokeRedBlue = new PokeRedBlue();
 	private static final long flags = RbyIGTChecker.CREATE_SAVE_STATES | pokeRedBlue.getSpecies(3).getIndexNumber();
-	private static final int maxCost = 60;
+	private static final int maxCost = 200;
 	private static final int maxStartFlashes = 0;
 
 	public static void main(String args[]) {
 		
 		final int joypadFlags[] = { UP, DOWN, LEFT, RIGHT, START, SELECT, B, A };
 		try {
-			partialManips = new PrintWriter(new File("tas_partialManips.txt"));
 			nidoManips = new PrintWriter(new File("tas_nidoManips.txt"));
 			godNidoManips = new PrintWriter(new File("tas_godNidoManips.txt"));
 		} catch (FileNotFoundException e) {
@@ -70,19 +63,20 @@ public class TASPlaybackBlueGlitchless {
 		
 		gb.loadBios("roms/gbc_bios.bin");
 		gb.loadRom("roms/pokeblue.gb", pokeRedBlue, LoadFlags.CGB_MODE | LoadFlags.GBA_FLAG | LoadFlags.READONLY_SAV);
-		gb.createRenderContext(2);
 		gb.setInjectInputs(false);
 		gb.setOnDisplayUpdate(new InputDisplay());
 		for(int i = 0; i < buttons.length; i++) {
 			gb.press(buttons[i]);
 		}
 		gb.write("wEnemyMonSpecies", 0);
+		gb.setInjectInputs(true);
+		gb.runUntil("joypadOverworld");
 		OverworldTile[][] viridianOwTiles = AStar.initTiles(Map.VIRIDIAN_CITY, 17, 50, true, new MapDestination(Map.VIRIDIAN_CITY, MapDestination.WEST_CONNECTION));
 		OverworldTile[][] route22OwTiles = AStar.initTiles(Map.ROUTE_22, 17, 50, true, new MapDestination(Map.ROUTE_22, MapDestination.GRASS_PATCHES));
 
-		viridianOwTiles[0][14].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][9]));
-		viridianOwTiles[0][15].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][9]));
-		viridianOwTiles[0][16].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][9]));
+		viridianOwTiles[0][14].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][6]));
+		viridianOwTiles[0][15].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][7]));
+		viridianOwTiles[0][16].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][8]));
 		viridianOwTiles[0][17].addEdge(new OverworldEdge(OverworldAction.LEFT, 0, 17, route22OwTiles[39][9]));
 		Collections.sort(viridianOwTiles[0][14].getEdgeList());
 		Collections.sort(viridianOwTiles[0][15].getEdgeList());
@@ -141,9 +135,6 @@ public class TASPlaybackBlueGlitchless {
                 continue;
             } else if (encounter.getSpecies() != 0) {
             	continue;
-            } else {
-    			partialManips.println(ow.toString() + " " + edgeAction.logStr() + ", cost: " + (ow.getWastedFrames() + edgeCost) + ", owFrames: " + (owFrames) + ", time: " + gb.getFrameCount());
-    			partialManips.flush();
             }
 			ArrayList<IGTState> newStates = new ArrayList<IGTState>();
 			newStates.add(new IGTState(encounter.getIgt(), encounter.getSave()));
